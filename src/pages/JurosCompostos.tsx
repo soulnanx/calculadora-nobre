@@ -157,7 +157,7 @@ export function JurosCompostos() {
                 <LineChart data={resultado.evolucaoMensal}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="mes" label={{ value: 'Mês', position: 'insideBottom', offset: -5 }} />
-                  <YAxis tickFormatter={(v) => formatCurrency(v)} />
+                  <YAxis tickFormatter={(v) => formatCurrency(v)} width={100} />
                   <Tooltip formatter={(value: number) => formatCurrency(value)} />
                   <Legend />
                   <Line
