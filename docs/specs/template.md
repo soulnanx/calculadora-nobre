@@ -1,5 +1,6 @@
 # [Título da Feature]
 
+**Arquivo:** `spec-<feature>.md`  
 **Status:** todo | wip | done  
 **Data:** YYYY-MM-DD  
 **Autor:** [nome]
