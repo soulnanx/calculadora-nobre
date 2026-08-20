@@ -1,1 +1,1 @@
-{"root":["./src/app.tsx","./src/main.tsx"],"version":"5.9.3"}
+{"root":["./src/app.tsx","./src/main.tsx","./src/calculators/compound-interest.test.ts","./src/calculators/compound-interest.ts","./src/components/currencyinput.tsx","./src/components/datatable.tsx","./src/components/numberinput.tsx","./src/components/radiogroup.tsx","./src/components/resultcard.tsx","./src/lib/utils.ts","./src/pages/home.tsx","./src/pages/juroscompostos.tsx","./src/types/index.ts"],"version":"5.9.3"}

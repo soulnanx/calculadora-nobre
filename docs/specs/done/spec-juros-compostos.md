@@ -1,6 +1,6 @@
 # Calculadora de Juros Compostos
 
-**Status:** todo  
+**Status:** done  
 **Data:** 2026-01-20  
 **Autor:** [a definir]
 
