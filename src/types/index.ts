@@ -22,3 +22,53 @@ export interface ResultadoJurosCompostos {
     saldo: number;
   }>;
 }
+
+export interface InputRentabilidade {
+  patrimonio: number;
+  taxaJuros: number;
+  taxaPeriodicidade: 'mensal' | 'anual';
+  inflacao: number;
+  inflacaoPeriodicidade: 'mensal' | 'anual';
+  periodo: number;
+  periodoUnidade: 'meses' | 'anos';
+  saqueDesejado?: number;
+}
+
+export interface CenarioPreservar {
+  saqueMensalInicial: number;
+  patrimonioConstanteReal: number;
+  duracao: 'perpetuo';
+}
+
+export interface CenarioConsumir {
+  saqueMensal: number;
+  duracaoMeses: number;
+  totalSacado: number;
+}
+
+export interface CenarioReal {
+  saqueMensalInicial: number;
+  duracaoMeses: number;
+  totalSacado: number;
+}
+
+export interface EvolucaoMensalRentabilidade {
+  mes: number;
+  saque: number;
+  jurosMes: number;
+  saldoNominal: number;
+  saldoReal: number;
+}
+
+export interface ResultadoRentabilidade {
+  cenarios: {
+    preservar: CenarioPreservar;
+    consumirNominal: CenarioConsumir;
+    consumirReal: CenarioReal;
+  };
+  evolucaoMensal: {
+    preservar: EvolucaoMensalRentabilidade[];
+    consumirNominal: EvolucaoMensalRentabilidade[];
+    consumirReal: EvolucaoMensalRentabilidade[];
+  };
+}
