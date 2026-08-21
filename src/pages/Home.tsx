@@ -7,6 +7,12 @@ const calculadoras = [
     nome: 'Juros Compostos',
     descricao: 'Simule o crescimento do seu dinheiro com aportes mensais',
   },
+  {
+    path: '/rentabilidade',
+    icon: '🏦',
+    nome: 'Rentabilidade',
+    descricao: 'Simule estratégias de resgate e aposentadoria',
+  },
 ];
 
 export function Home() {
