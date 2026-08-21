@@ -72,3 +72,32 @@ export interface ResultadoRentabilidade {
     consumirReal: EvolucaoMensalRentabilidade[];
   };
 }
+
+export interface InputFinanciamento {
+  valor: number;
+  taxaJuros: number;
+  taxaPeriodicidade: 'mensal' | 'anual';
+  prazo: number;
+  prazoUnidade: 'meses' | 'anos';
+  sistema: 'SAC' | 'Price';
+}
+
+export interface ParcelaMensal {
+  mes: number;
+  saldoInicial: number;
+  juros: number;
+  amortizacao: number;
+  parcela: number;
+  saldoFinal: number;
+}
+
+export interface ResultadoFinanciamento {
+  resumo: {
+    totalPago: number;
+    totalJuros: number;
+    primeiraParcela: number;
+    ultimaParcela: number;
+    numeroParcelas: number;
+  };
+  evolucaoMensal: ParcelaMensal[];
+}
