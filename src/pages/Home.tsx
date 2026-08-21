@@ -13,6 +13,12 @@ const calculadoras = [
     nome: 'Rentabilidade',
     descricao: 'Simule estratégias de resgate e aposentadoria',
   },
+  {
+    path: '/financiamento',
+    icon: '🏠',
+    nome: 'Financiamento',
+    descricao: 'Simule financiamento imobiliário SAC e Price',
+  },
 ];
 
 export function Home() {
