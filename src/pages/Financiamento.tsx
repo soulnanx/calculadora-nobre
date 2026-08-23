@@ -5,6 +5,7 @@ import { NumberInput } from '../components/NumberInput';
 import { RadioGroup } from '../components/RadioGroup';
 import { ResultCard } from '../components/ResultCard';
 import { calcularFinanciamentoV2 } from '../calculators/amortization';
+import { parsearParcelas, gerarSequenciaParcelas } from '../calculators/parcelas';
 import { InputFinanciamentoV2, AmortizacaoExtra, TaxaSeguro } from '../types';
 import {
   LineChart,
@@ -28,6 +29,12 @@ export function Financiamento() {
   const [comparar, setComparar] = useState(false);
   const [amortizacoesExtras, setAmortizacoesExtras] = useState<AmortizacaoExtra[]>([]);
   const [taxasSeguros, setTaxasSeguros] = useState<TaxaSeguro[]>([]);
+  const [notacaoParcelas, setNotacaoParcelas] = useState('');
+  const [valorAmortizacao, setValorAmortizacao] = useState(0);
+  const [tipoAmortizacao, setTipoAmortizacao] = useState<'prazo' | 'parcela'>('prazo');
+  const [seqInicio, setSeqInicio] = useState(1);
+  const [seqIncremento, setSeqIncremento] = useState(6);
+  const [seqAte, setSeqAte] = useState(36);
   const [dataInicio, setDataInicio] = useState(() => {
     const hoje = new Date();
     return `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}`;
@@ -86,6 +93,26 @@ export function Financiamento() {
     const novas = [...amortizacoesExtras];
     novas[index] = { ...novas[index], [campo]: valor };
     setAmortizacoesExtras(novas);
+  };
+
+  const aplicarAmortizacaoNotacao = () => {
+    const parcelas = parsearParcelas(notacaoParcelas);
+    if (parcelas.length === 0 || valorAmortizacao <= 0) return;
+
+    const novas = parcelas.map((mes) => ({
+      mes,
+      valor: valorAmortizacao,
+      tipo: tipoAmortizacao as 'prazo' | 'parcela',
+    }));
+
+    setAmortizacoesExtras([...amortizacoesExtras, ...novas]);
+    setNotacaoParcelas('');
+  };
+
+  const aplicarGeradorSequencia = () => {
+    const sequencia = gerarSequenciaParcelas(seqInicio, seqIncremento, seqAte);
+    if (!sequencia) return;
+    setNotacaoParcelas(sequencia);
   };
 
   const adicionarTaxa = () => {
@@ -210,6 +237,84 @@ export function Financiamento() {
 
               <div className="border-t border-gray-200 pt-6">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Amortizações Extras</h3>
+
+                <div className="space-y-4 mb-6 p-4 bg-gray-50 rounded-lg">
+                  <div>
+                    <label className="block text-xs text-gray-600 mb-1">
+                      Parcelas (ex: 1-5, 3,7,12-15,20)
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="ex: 1-5"
+                      value={notacaoParcelas}
+                      onChange={(e) => setNotacaoParcelas(e.target.value)}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-600 mb-1">Valor da amortização</label>
+                    <CurrencyInput value={valorAmortizacao} onChange={setValorAmortizacao} />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-600 mb-1">Tipo</label>
+                    <RadioGroup
+                      name="tipoAmortizacao"
+                      options={[
+                        { value: 'prazo', label: 'Por prazo' },
+                        { value: 'parcela', label: 'Por parcela' }
+                      ]}
+                      value={tipoAmortizacao}
+                      onChange={(v) => setTipoAmortizacao(v as 'prazo' | 'parcela')}
+                    />
+                  </div>
+                  <button
+                    onClick={aplicarAmortizacaoNotacao}
+                    disabled={valorAmortizacao <= 0}
+                    className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
+                  >
+                    Aplicar em {parsearParcelas(notacaoParcelas).length} parcela(s)
+                  </button>
+                  <p className="text-xs text-gray-500">
+                    {parsearParcelas(notacaoParcelas).length > 0
+                      ? `Será aplicado em: ${parsearParcelas(notacaoParcelas).join(', ')}`
+                      : 'Digite parcelas acima (ex: 1-5 cria 5 amortizações)'}
+                  </p>
+
+                  <div className="pt-3 border-t border-gray-200">
+                    <label className="block text-xs text-gray-600 mb-1">Gerador de sequência</label>
+                    <div className="flex gap-2 items-end">
+                      <NumberInput
+                        value={seqInicio}
+                        onChange={setSeqInicio}
+                      />
+                      <NumberInput
+                        value={seqIncremento}
+                        onChange={setSeqIncremento}
+                      />
+                      <NumberInput
+                        value={seqAte}
+                        onChange={setSeqAte}
+                      />
+                    </div>
+                    <div className="flex gap-2 text-xs text-gray-500 mt-1 mb-2">
+                      <span>começando em</span>
+                      <span>a cada</span>
+                      <span>até</span>
+                    </div>
+                    <button
+                      onClick={aplicarGeradorSequencia}
+                      className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
+                    >
+                      Gerar sequência
+                    </button>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {gerarSequenciaParcelas(seqInicio, seqIncremento, seqAte)
+                        ? `Sequência: ${gerarSequenciaParcelas(seqInicio, seqIncremento, seqAte)}`
+                        : 'Defina início, incremento e limite'}
+                    </p>
+                  </div>
+                </div>
+
                 {amortizacoesExtras.map((amort, index) => (
                   <div key={index} className="flex gap-2 items-end mb-3">
                     <div className="flex-1">
