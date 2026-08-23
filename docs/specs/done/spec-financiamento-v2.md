@@ -163,20 +163,33 @@ interface ResultadoFinanciamentoV2 extends ResultadoFinanciamento {
 
 #### Formulário
 - Seção "Amortizações Extras":
-  - Botão "Adicionar amortização"
-  - Para cada amortização: mês, valor, tipo (radio: prazo/parcela)
-  - Botão "Remover" em cada linha
+  - Campo de notação de parcelas (ex: `1-5`, `3,7,12-15,20`) com parser que expande ranges
+  - Campo de valor da amortização + tipo (radio: prazo/parcela)
+  - Botões "Adicionar em N parcela(s)" (soma valores existentes) e "Substituir em N parcela(s)" (sobrescreve valores existentes) — mesclagem por (mês + tipo)
+  - Gerador de sequência: "começando em X, a cada Y, até Z" com botão "Gerar sequência" que preenche o campo de notação
+  - Lista de amortizações aplicadas com edição/remoção por linha
 - Seção "Taxas e Seguros":
   - Botão "Adicionar taxa/seguro"
   - Para cada taxa: mês inicial, mês final, valor mensal
   - Botão "Remover" em cada linha
+- Campo "Data de início" (input month) que determina as datas das parcelas
 
 #### Resultado
 - ResultCards adicionais:
   - Total de amortização extra
   - Total de taxas/seguros
+  - Nº parcelas (exibido como número inteiro, não moeda)
+- Texto "Última parcela em: MM/AAAA"
 - Tabela atualizada com colunas:
-  - Mês, Saldo Inicial, Juros, Amortização, Amortização Extra, Taxa/Seguro, Parcela Total, Saldo Final
+  - Mês | MM/AAAA, Saldo Inicial, Juros, Amortização, Amortização Extra, Taxa/Seguro, Parcela Total, Saldo Final
+- Layout em 1 coluna (largura total, max-w-3xl) — formulário empilhado, resultado abaixo
+- Quando campos essenciais (valor/prazo) estão zerados: mensagem "Preencha o valor do financiamento e o prazo para calcular a simulação" em vez de renderizar resultados quebrados
+
+### Correções de Cálculo (após v2 inicial)
+
+- **Ordem da amortização extra**: aplicada APÓS o pagamento da parcela do mês (conforme site de referência), não antes
+- **Guarda contra campos vazios**: `prazo <= 0`, `valor <= 0` ou `NaN` retornam resultado vazio seguro (evita divisão por zero e crash na UI)
+- **NumberInput preserva texto vazio**: o campo pode ficar vazio enquanto o usuário digita (não força "0" visível)
 
 ### Validação Matemática
 
@@ -205,15 +218,22 @@ Para garantir que a implementação está correta, os testes devem validar:
    - Esperado: Cálculo correto de ambos
 
 ## Critérios de Aceitação
-- [ ] Formulário permite adicionar múltiplas amortizações extras
-- [ ] Formulário permite adicionar múltiplas taxas/seguros
-- [ ] Amortização por prazo reduz corretamente o número de parcelas
-- [ ] Amortização por parcela reduz corretamente o valor da parcela
-- [ ] Taxas/seguros são somados à parcela no período correto
-- [ ] Resultado mostra total de amortização extra e taxas/seguros
-- [ ] Tabela mostra colunas adicionais (amortização extra, taxa/seguro, parcela total)
-- [ ] Testes validam a matemática com exemplos reais
-- [ ] Layout responsivo mantido
+- [x] Formulário permite adicionar múltiplas amortizações extras
+- [x] Notação de parcelas (ranges, listas, combinações) com parser
+- [x] Gerador de sequência de parcelas
+- [x] Botões Adicionar (soma) e Substituir (sobrescreve) com mesclagem por mês+tipo
+- [x] Formulário permite adicionar múltiplas taxas/seguros
+- [x] Amortização por prazo reduz corretamente o número de parcelas
+- [x] Amortização por parcela reduz corretamente o valor da parcela
+- [x] Amortização extra aplicada APÓS o pagamento da parcela
+- [x] Taxas/seguros são somados à parcela no período correto
+- [x] Resultado mostra total de amortização extra e taxas/seguros
+- [x] Tabela mostra colunas adicionais (amortização extra, taxa/seguro, parcela total)
+- [x] Datas das parcelas (MM/AAAA) e data da última parcela
+- [x] Testes validam a matemática com exemplos reais (incluindo site de referência)
+- [x] Layout em 1 coluna (responsivo)
+- [x] Campos vazios não crasham a aplicação (guardas + mensagem de fallback)
+- [x] Validação contra site de referência (R$ 115.688,99, SAC, 9,89% a.a, 36 meses)
 
 ## Futuro (v3+)
 - Correção monetária (TR/IPCA)

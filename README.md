@@ -32,8 +32,11 @@ Simule financiamento imobiliário com sistemas SAC e Price.
 **Funcionalidades:**
 - Sistemas SAC (parcelas decrescentes) e Price (parcelas fixas)
 - Comparação lado a lado dos dois sistemas
-- Amortizações extras (por prazo e por parcela)
+- Amortizações extras com notação de parcelas (ex: `1-5`, `3,7,12-15,20`)
+- Botões "Adicionar" (soma valores) e "Substituir" (sobrescreve) por parcela
+- Gerador de sequência de parcelas (começando em X, a cada Y, até Z)
 - Taxas e seguros mensais
+- Datas das parcelas (MM/AAAA) e data da última parcela
 - Gráfico de evolução do saldo devedor e parcelas
 - Tabela detalhada com todas as colunas
 
