@@ -21,3 +21,4 @@ lerna-debug.log*
 .superpowers/
 .playwright-mcp/
 *.png
+!public/*.png
