@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { calcularFinanciamento } from './amortization';
+import { calcularFinanciamento, calcularFinanciamentoV2 } from './amortization';
 
 describe('calcularFinanciamento', () => {
   it('deve calcular financiamento SAC com parcelas decrescentes', () => {
@@ -141,5 +141,143 @@ describe('calcularFinanciamento', () => {
     
     // SAC deve ter última parcela menor que Price
     expect(resultadoSAC.resumo.ultimaParcela).toBeLessThan(resultadoPrice.resumo.ultimaParcela);
+  });
+});
+
+describe('calcularFinanciamentoV2', () => {
+  it('deve calcular SAC com amortização extra por prazo', () => {
+    const input = {
+      valor: 100000,
+      taxaJuros: 1,
+      taxaPeriodicidade: 'mensal' as const,
+      prazo: 12,
+      prazoUnidade: 'meses' as const,
+      sistema: 'SAC' as const,
+      amortizacoesExtras: [
+        { mes: 6, valor: 20000, tipo: 'prazo' as const }
+      ],
+    };
+
+    const resultado = calcularFinanciamentoV2(input);
+
+    // Amortização constante = 100000 / 12 = 8333.33
+    // Saldo após mês 6: 50000
+    // Após amortização: 30000
+    // Parcelas restantes: 30000 / 8333.33 = 3.6 ≈ 4 meses
+    // Total: 6 + 4 = 10 meses
+    expect(resultado.resumo.numeroParcelas).toBeLessThanOrEqual(11);
+    expect(resultado.resumo.numeroParcelas).toBeGreaterThanOrEqual(9);
+    expect(resultado.resumo.totalAmortizacaoExtra).toBe(20000);
+    expect(resultado.resumo.totalJuros).toBeLessThan(
+      calcularFinanciamentoV2({ ...input, amortizacoesExtras: [] }).resumo.totalJuros
+    );
+  });
+
+  it('deve calcular Price com amortização extra por parcela', () => {
+    const input = {
+      valor: 100000,
+      taxaJuros: 1,
+      taxaPeriodicidade: 'mensal' as const,
+      prazo: 12,
+      prazoUnidade: 'meses' as const,
+      sistema: 'Price' as const,
+      amortizacoesExtras: [
+        { mes: 6, valor: 20000, tipo: 'parcela' as const }
+      ],
+    };
+
+    const resultado = calcularFinanciamentoV2(input);
+
+    // Saldo após mês 6: ~54264.72
+    // Após amortização: ~34264.72
+    // Parcelas restantes: 6
+    // Nova parcela: PMT(34264.72, 0.01, 6) ≈ 5899.58
+    expect(resultado.resumo.numeroParcelas).toBe(12);
+    expect(resultado.resumo.totalAmortizacaoExtra).toBe(20000);
+    
+    // Parcela após mês 6 deve ser menor que antes
+    const parcelaAntes = resultado.evolucaoMensal[5].parcelaTotal;
+    const parcelaDepois = resultado.evolucaoMensal[6].parcelaTotal;
+    expect(parcelaDepois).toBeLessThan(parcelaAntes);
+  });
+
+  it('deve calcular taxas e seguros', () => {
+    const input = {
+      valor: 100000,
+      taxaJuros: 1,
+      taxaPeriodicidade: 'mensal' as const,
+      prazo: 12,
+      prazoUnidade: 'meses' as const,
+      sistema: 'Price' as const,
+      taxasSeguros: [
+        { mesInicial: 1, mesFinal: 12, valorMensal: 50 }
+      ],
+    };
+
+    const resultado = calcularFinanciamentoV2(input);
+    const resultadoSemTaxa = calcularFinanciamentoV2({ ...input, taxasSeguros: [] });
+
+    // Parcela total = parcela base + taxa
+    expect(resultado.evolucaoMensal[0].taxaSeguro).toBe(50);
+    expect(resultado.evolucaoMensal[0].parcelaTotal).toBeCloseTo(
+      resultadoSemTaxa.evolucaoMensal[0].parcela + 50,
+      2
+    );
+    
+    // Total de taxas = 50 * 12 = 600
+    expect(resultado.resumo.totalTaxasSeguros).toBe(600);
+  });
+
+  it('deve calcular múltiplas taxas e seguros', () => {
+    const input = {
+      valor: 100000,
+      taxaJuros: 1,
+      taxaPeriodicidade: 'mensal' as const,
+      prazo: 12,
+      prazoUnidade: 'meses' as const,
+      sistema: 'Price' as const,
+      taxasSeguros: [
+        { mesInicial: 1, mesFinal: 6, valorMensal: 50 },
+        { mesInicial: 7, mesFinal: 12, valorMensal: 30 }
+      ],
+    };
+
+    const resultado = calcularFinanciamentoV2(input);
+
+    // Meses 1-6: taxa = 50
+    expect(resultado.evolucaoMensal[0].taxaSeguro).toBe(50);
+    expect(resultado.evolucaoMensal[5].taxaSeguro).toBe(50);
+    
+    // Meses 7-12: taxa = 30
+    expect(resultado.evolucaoMensal[6].taxaSeguro).toBe(30);
+    expect(resultado.evolucaoMensal[11].taxaSeguro).toBe(30);
+    
+    // Total = 50*6 + 30*6 = 300 + 180 = 480
+    expect(resultado.resumo.totalTaxasSeguros).toBe(480);
+  });
+
+  it('deve combinar amortização extra e taxas/seguros', () => {
+    const input = {
+      valor: 100000,
+      taxaJuros: 1,
+      taxaPeriodicidade: 'mensal' as const,
+      prazo: 12,
+      prazoUnidade: 'meses' as const,
+      sistema: 'Price' as const,
+      amortizacoesExtras: [
+        { mes: 6, valor: 20000, tipo: 'prazo' as const }
+      ],
+      taxasSeguros: [
+        { mesInicial: 1, mesFinal: 12, valorMensal: 50 }
+      ],
+    };
+
+    const resultado = calcularFinanciamentoV2(input);
+
+    expect(resultado.resumo.totalAmortizacaoExtra).toBe(20000);
+    expect(resultado.resumo.totalTaxasSeguros).toBeGreaterThan(0);
+    expect(resultado.evolucaoMensal[0].amortizacaoExtra).toBe(0);
+    expect(resultado.evolucaoMensal[5].amortizacaoExtra).toBe(20000);
+    expect(resultado.evolucaoMensal[0].taxaSeguro).toBe(50);
   });
 });
