@@ -502,11 +502,11 @@ export function Financiamento() {
               <ResponsiveContainer width="100%" height={300}>
                 <LineChart data={dadosGrafico}>
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="mes" label={{ value: 'Mês', position: 'insideBottom', offset: -5 }} />
-                  <YAxis yAxisId="left" tickFormatter={(v) => formatCurrencyCompact(v)} width={90} />
-                  <YAxis yAxisId="right" orientation="right" tickFormatter={(v) => formatCurrencyCompact(v)} width={80} />
+                  <XAxis dataKey="mes" tick={{ fontSize: 10 }} label={{ value: 'Mês', position: 'insideBottom', offset: -5 }} />
+                  <YAxis yAxisId="left" tickFormatter={(v) => formatCurrencyCompact(v)} width={90} tick={{ fontSize: 10 }} />
+                  <YAxis yAxisId="right" orientation="right" tickFormatter={(v) => formatCurrencyCompact(v)} width={80} tick={{ fontSize: 10 }} />
                   <Tooltip formatter={(value: number) => formatCurrency(value)} />
-                  <Legend />
+                  <Legend wrapperStyle={{ fontSize: 10 }} />
                   <Line
                     type="monotone"
                     yAxisId="left"

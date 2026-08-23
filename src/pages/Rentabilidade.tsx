@@ -245,10 +245,10 @@ export function Rentabilidade() {
               <ResponsiveContainer width="100%" height={300}>
                 <LineChart data={dadosGrafico}>
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="mes" label={{ value: 'Mês', position: 'insideBottom', offset: -5 }} />
-                  <YAxis tickFormatter={(v) => formatCurrency(v)} width={100} />
+                  <XAxis dataKey="mes" tick={{ fontSize: 10 }} label={{ value: 'Mês', position: 'insideBottom', offset: -5 }} />
+                  <YAxis tickFormatter={(v) => formatCurrency(v)} width={100} tick={{ fontSize: 10 }} />
                   <Tooltip formatter={(value: number) => formatCurrency(value)} />
-                  <Legend />
+                  <Legend wrapperStyle={{ fontSize: 10 }} />
                   <Line
                     type="monotone"
                     dataKey="preservar"
