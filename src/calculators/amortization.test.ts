@@ -332,6 +332,39 @@ describe('calcularFinanciamentoV2', () => {
     expect(resultado.resumo.dataUltimaParcela).toBe('08/2029');
   });
 
+  it('deve retornar resultado vazio sem crashar quando prazo é zero', () => {
+    const input = {
+      valor: 100000,
+      taxaJuros: 1,
+      taxaPeriodicidade: 'mensal' as const,
+      prazo: 0,
+      prazoUnidade: 'meses' as const,
+      sistema: 'SAC' as const,
+    };
+
+    const resultado = calcularFinanciamentoV2(input);
+
+    expect(resultado.evolucaoMensal).toHaveLength(0);
+    expect(resultado.resumo.numeroParcelas).toBe(0);
+    expect(resultado.resumo.totalPago).toBe(0);
+  });
+
+  it('deve retornar resultado vazio sem crashar quando valor é zero', () => {
+    const input = {
+      valor: 0,
+      taxaJuros: 1,
+      taxaPeriodicidade: 'mensal' as const,
+      prazo: 12,
+      prazoUnidade: 'meses' as const,
+      sistema: 'Price' as const,
+    };
+
+    const resultado = calcularFinanciamentoV2(input);
+
+    expect(resultado.evolucaoMensal).toHaveLength(0);
+    expect(resultado.resumo.totalPago).toBe(0);
+  });
+
   it('deve aplicar amortização extra APÓS pagar a parcela', () => {
     const input = {
       valor: 100000,

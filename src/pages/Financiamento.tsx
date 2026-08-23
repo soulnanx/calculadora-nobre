@@ -424,6 +424,15 @@ export function Financiamento() {
 
           {/* Resultado */}
           <div className="space-y-8">
+            {resultado.evolucaoMensal.length === 0 ? (
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <h2 className="text-xl font-semibold text-gray-900 mb-6">Resultado - {sistema}</h2>
+                <p className="text-gray-600">
+                  Preencha o valor do financiamento e o prazo para calcular a simulação.
+                </p>
+              </div>
+            ) : (
+            <>
             {/* Resumo */}
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
               <h2 className="text-xl font-semibold text-gray-900 mb-6">Resultado - {sistema}</h2>
@@ -554,6 +563,8 @@ export function Financiamento() {
                 </table>
               </div>
             </div>
+            </>
+            )}
           </div>
         </div>
       </main>

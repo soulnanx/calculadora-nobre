@@ -1,4 +1,4 @@
-import { InputHTMLAttributes } from 'react';
+import { useState, useEffect, InputHTMLAttributes } from 'react';
 
 interface NumberInputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'onChange' | 'value'> {
   value: number;
@@ -7,16 +7,24 @@ interface NumberInputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, '
 }
 
 export function NumberInput({ value, onChange, suffix, ...props }: NumberInputProps) {
+  const [textValue, setTextValue] = useState<string>(String(value));
+
+  useEffect(() => {
+    setTextValue(String(value));
+  }, [value]);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const numericValue = parseFloat(e.target.value) || 0;
-    onChange(numericValue);
+    const raw = e.target.value;
+    setTextValue(raw);
+    const numericValue = parseFloat(raw);
+    onChange(isNaN(numericValue) ? 0 : numericValue);
   };
 
   return (
     <div className="relative">
       <input
         type="number"
-        value={value}
+        value={textValue}
         onChange={handleChange}
         className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
         {...props}

@@ -12,8 +12,21 @@ import {
 export function calcularFinanciamento(
   input: InputFinanciamento
 ): ResultadoFinanciamento {
-  let taxaMensal = normalizarTaxaMensal(input.taxaJuros, input.taxaPeriodicidade);
-  let prazoMeses = normalizarPrazoMeses(input.prazo, input.prazoUnidade);
+  const taxaMensal = normalizarTaxaMensal(input.taxaJuros, input.taxaPeriodicidade);
+  const prazoMeses = normalizarPrazoMeses(input.prazo, input.prazoUnidade);
+
+  if (prazoMeses <= 0 || input.valor <= 0 || isNaN(prazoMeses) || isNaN(input.valor)) {
+    return {
+      resumo: {
+        totalPago: 0,
+        totalJuros: 0,
+        primeiraParcela: 0,
+        ultimaParcela: 0,
+        numeroParcelas: 0,
+      },
+      evolucaoMensal: [],
+    };
+  }
 
   const evolucaoMensal: ParcelaMensal[] = [];
   
@@ -127,6 +140,22 @@ export function calcularFinanciamentoV2(
   const prazoMeses = normalizarPrazoMeses(input.prazo, input.prazoUnidade);
   const amortizacoesExtras = input.amortizacoesExtras || [];
   const taxasSeguros = input.taxasSeguros || [];
+
+  if (prazoMeses <= 0 || input.valor <= 0 || isNaN(prazoMeses) || isNaN(input.valor)) {
+    return {
+      resumo: {
+        totalPago: 0,
+        totalJuros: 0,
+        totalAmortizacaoExtra: 0,
+        totalTaxasSeguros: 0,
+        primeiraParcela: 0,
+        ultimaParcela: 0,
+        numeroParcelas: 0,
+        dataUltimaParcela: '',
+      },
+      evolucaoMensal: [],
+    };
+  }
 
   const evolucaoMensal: ParcelaMensalV2[] = [];
   
