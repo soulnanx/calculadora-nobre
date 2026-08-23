@@ -19,3 +19,5 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 .superpowers/
+.playwright-mcp/
+*.png
