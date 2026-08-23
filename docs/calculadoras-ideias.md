@@ -6,14 +6,12 @@
 |---|---|---|
 | Juros Compostos | `/juros-compostos` | Simula o crescimento do dinheiro com aportes mensais e ajuste por inflação |
 | Rentabilidade e Aposentadoria | `/rentabilidade` | Simula estratégias de resgate: preservar, consumir nominal, consumir real |
+| Financiamento Imobiliário | `/financiamento` | Simula financiamento com sistemas SAC e Price, comparação lado a lado, amortizações extras (por prazo e por parcela), taxas e seguros |
 
 ## Próximas (prioridade)
 
 ### Comparador de Investimentos
 Compara rentabilidade líquida de diferentes modalidades de investimento lado a lado (CDI, Selic, Poupança, CDB, Tesouro Direto). Permite visualizar qual rende mais após IR e considerar taxas de administração.
-
-### Financiamento Imobiliário
-Simula financiamento com sistemas PRICE e SAC, comparativo de custos totais, e simulação de amortização extra. Mostra evolução do saldo devedor, total de juros pagos, e impacto de amortizações antecipadas.
 
 ## Ideias Futuras
 
