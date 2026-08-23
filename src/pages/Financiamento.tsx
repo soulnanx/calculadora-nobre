@@ -95,17 +95,28 @@ export function Financiamento() {
     setAmortizacoesExtras(novas);
   };
 
-  const aplicarAmortizacaoNotacao = () => {
+  const aplicarAmortizacaoNotacao = (modo: 'adicionar' | 'substituir') => {
     const parcelas = parsearParcelas(notacaoParcelas);
     if (parcelas.length === 0 || valorAmortizacao <= 0) return;
 
-    const novas = parcelas.map((mes) => ({
-      mes,
-      valor: valorAmortizacao,
-      tipo: tipoAmortizacao as 'prazo' | 'parcela',
-    }));
+    const novas = [...amortizacoesExtras];
+    const tipo = tipoAmortizacao as 'prazo' | 'parcela';
 
-    setAmortizacoesExtras([...amortizacoesExtras, ...novas]);
+    parcelas.forEach((mes) => {
+      const existente = novas.find((a) => a.mes === mes && a.tipo === tipo);
+
+      if (existente) {
+        if (modo === 'adicionar') {
+          existente.valor += valorAmortizacao;
+        } else {
+          existente.valor = valorAmortizacao;
+        }
+      } else {
+        novas.push({ mes, valor: valorAmortizacao, tipo });
+      }
+    });
+
+    setAmortizacoesExtras(novas);
     setNotacaoParcelas('');
   };
 
@@ -267,13 +278,22 @@ export function Financiamento() {
                       onChange={(v) => setTipoAmortizacao(v as 'prazo' | 'parcela')}
                     />
                   </div>
-                  <button
-                    onClick={aplicarAmortizacaoNotacao}
-                    disabled={valorAmortizacao <= 0}
-                    className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
-                  >
-                    Aplicar em {parsearParcelas(notacaoParcelas).length} parcela(s)
-                  </button>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => aplicarAmortizacaoNotacao('adicionar')}
+                      disabled={valorAmortizacao <= 0}
+                      className="flex-1 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
+                    >
+                      Adicionar em {parsearParcelas(notacaoParcelas).length} parcela(s)
+                    </button>
+                    <button
+                      onClick={() => aplicarAmortizacaoNotacao('substituir')}
+                      disabled={valorAmortizacao <= 0}
+                      className="flex-1 px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 disabled:opacity-50"
+                    >
+                      Substituir em {parsearParcelas(notacaoParcelas).length} parcela(s)
+                    </button>
+                  </div>
                   <p className="text-xs text-gray-500">
                     {parsearParcelas(notacaoParcelas).length > 0
                       ? `Será aplicado em: ${parsearParcelas(notacaoParcelas).join(', ')}`
