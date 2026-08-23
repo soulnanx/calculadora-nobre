@@ -146,12 +146,12 @@ export function Financiamento() {
       <main className="max-w-7xl mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-8">Calculadora de Financiamento Imobiliário</h1>
 
-        <div className="max-w-5xl mx-auto space-y-8">
+        <div className="max-w-3xl mx-auto space-y-8">
           {/* Formulário */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             <h2 className="text-xl font-semibold text-gray-900 mb-6">Parâmetros</h2>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Valor do financiamento
@@ -413,7 +413,12 @@ export function Financiamento() {
                 <ResultCard label="Total de juros" value={resultado.resumo.totalJuros} />
                 <ResultCard label="Primeira parcela" value={resultado.resumo.primeiraParcela} />
                 <ResultCard label="Última parcela" value={resultado.resumo.ultimaParcela} />
-                <ResultCard label="Nº parcelas" value={resultado.resumo.numeroParcelas} />
+                <div className="p-4 rounded-lg bg-gray-50">
+                  <div className="text-sm text-gray-600 mb-1">Nº parcelas</div>
+                  <div className="text-2xl font-bold text-gray-900">
+                    {resultado.resumo.numeroParcelas}
+                  </div>
+                </div>
                 {resultado.resumo.totalAmortizacaoExtra > 0 && (
                   <ResultCard label="Total amortização extra" value={resultado.resumo.totalAmortizacaoExtra} />
                 )}
