@@ -7,6 +7,17 @@ export function formatCurrency(value: number): string {
   });
 }
 
+export function formatCurrencyCompact(value: number): string {
+  const abs = Math.abs(value);
+  if (abs >= 1_000_000) {
+    return `R$ ${(value / 1_000_000).toLocaleString('pt-BR', { maximumFractionDigits: 1 })} mi`;
+  }
+  if (abs >= 1_000) {
+    return `R$ ${(value / 1_000).toLocaleString('pt-BR', { maximumFractionDigits: 0 })} mil`;
+  }
+  return `R$ ${value.toLocaleString('pt-BR', { maximumFractionDigits: 0 })}`;
+}
+
 export function formatPercent(value: number): string {
   return `${value.toFixed(2)}%`;
 }

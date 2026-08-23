@@ -17,7 +17,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts';
-import { formatCurrency } from '../lib/utils';
+import { formatCurrency, formatCurrencyCompact } from '../lib/utils';
 
 export function Financiamento() {
   const [valor, setValor] = useState(300000);
@@ -155,7 +155,7 @@ export function Financiamento() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 py-8">
-        <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-6 md:mb-8">Calculadora de Financiamento Imobiliário</h1>
+        <h1 className="text-xl md:text-3xl font-bold text-gray-900 mb-4 md:mb-8">Calculadora de Financiamento</h1>
 
         <div className="max-w-3xl mx-auto space-y-4 md:space-y-8">
           {/* Formulário */}
@@ -224,6 +224,7 @@ export function Financiamento() {
                 </label>
                 <RadioGroup
                   name="sistema"
+                  vertical
                   options={[
                     { value: 'SAC', label: 'SAC (parcelas decrescentes)' },
                     { value: 'Price', label: 'Price (parcelas fixas)' },
@@ -481,11 +482,13 @@ export function Financiamento() {
                 <LineChart data={dadosGrafico}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="mes" label={{ value: 'Mês', position: 'insideBottom', offset: -5 }} />
-                  <YAxis tickFormatter={(v) => formatCurrency(v)} width={100} />
+                  <YAxis yAxisId="left" tickFormatter={(v) => formatCurrencyCompact(v)} width={90} />
+                  <YAxis yAxisId="right" orientation="right" tickFormatter={(v) => formatCurrencyCompact(v)} width={80} />
                   <Tooltip formatter={(value: number) => formatCurrency(value)} />
                   <Legend />
                   <Line
                     type="monotone"
+                    yAxisId="left"
                     dataKey="saldoDevedor"
                     stroke="#3b82f6"
                     strokeWidth={2}
@@ -493,6 +496,7 @@ export function Financiamento() {
                   />
                   <Line
                     type="monotone"
+                    yAxisId="right"
                     dataKey="parcela"
                     stroke="#10b981"
                     strokeWidth={2}
@@ -502,6 +506,7 @@ export function Financiamento() {
                     <>
                       <Line
                         type="monotone"
+                        yAxisId="left"
                         dataKey="saldoDevedorComparacao"
                         stroke="#f59e0b"
                         strokeWidth={2}
@@ -509,6 +514,7 @@ export function Financiamento() {
                       />
                       <Line
                         type="monotone"
+                        yAxisId="right"
                         dataKey="parcelaComparacao"
                         stroke="#ef4444"
                         strokeWidth={2}

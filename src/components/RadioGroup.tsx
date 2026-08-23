@@ -8,11 +8,12 @@ interface RadioGroupProps {
   options: RadioOption[];
   value: string;
   onChange: (value: string) => void;
+  vertical?: boolean;
 }
 
-export function RadioGroup({ name, options, value, onChange }: RadioGroupProps) {
+export function RadioGroup({ name, options, value, onChange, vertical = false }: RadioGroupProps) {
   return (
-    <div className="flex gap-4">
+    <div className={`${vertical ? 'flex flex-col gap-2' : 'flex gap-4'}`}>
       {options.map((option) => (
         <label key={option.value} className="flex items-center gap-2 cursor-pointer">
           <input
