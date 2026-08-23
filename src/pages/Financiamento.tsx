@@ -155,14 +155,14 @@ export function Financiamento() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">Calculadora de Financiamento Imobiliário</h1>
+        <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-6 md:mb-8">Calculadora de Financiamento Imobiliário</h1>
 
-        <div className="max-w-3xl mx-auto space-y-8">
+        <div className="max-w-3xl mx-auto space-y-4 md:space-y-8">
           {/* Formulário */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-6">Parâmetros</h2>
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 md:p-6">
+            <h2 className="text-lg md:text-xl font-semibold text-gray-900 mb-4 md:mb-6">Parâmetros</h2>
 
-            <div className="space-y-6">
+            <div className="space-y-4 md:space-y-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Valor do financiamento
@@ -425,8 +425,8 @@ export function Financiamento() {
           {/* Resultado */}
           <div className="space-y-8">
             {resultado.evolucaoMensal.length === 0 ? (
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <h2 className="text-xl font-semibold text-gray-900 mb-6">Resultado - {sistema}</h2>
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 md:p-6">
+                <h2 className="text-lg md:text-xl font-semibold text-gray-900 mb-4 md:mb-6">Resultado - {sistema}</h2>
                 <p className="text-gray-600">
                   Preencha o valor do financiamento e o prazo para calcular a simulação.
                 </p>
@@ -434,17 +434,17 @@ export function Financiamento() {
             ) : (
             <>
             {/* Resumo */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-6">Resultado - {sistema}</h2>
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 md:p-6">
+              <h2 className="text-lg md:text-xl font-semibold text-gray-900 mb-4 md:mb-6">Resultado - {sistema}</h2>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
                 <ResultCard label="Total pago" value={resultado.resumo.totalPago} highlight />
                 <ResultCard label="Total de juros" value={resultado.resumo.totalJuros} />
                 <ResultCard label="Primeira parcela" value={resultado.resumo.primeiraParcela} />
                 <ResultCard label="Última parcela" value={resultado.resumo.ultimaParcela} />
-                <div className="p-4 rounded-lg bg-gray-50">
-                  <div className="text-sm text-gray-600 mb-1">Nº parcelas</div>
-                  <div className="text-2xl font-bold text-gray-900">
+                <div className="p-3 md:p-4 rounded-lg bg-gray-50 col-span-2 lg:col-span-1">
+                  <div className="text-xs md:text-sm text-gray-600 mb-1">Nº parcelas</div>
+                  <div className="text-xl md:text-2xl font-bold text-gray-900">
                     {resultado.resumo.numeroParcelas}
                   </div>
                 </div>
@@ -474,8 +474,8 @@ export function Financiamento() {
             </div>
 
             {/* Gráfico */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-6">Evolução</h2>
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 md:p-6">
+              <h2 className="text-lg md:text-xl font-semibold text-gray-900 mb-4 md:mb-6">Evolução</h2>
 
               <ResponsiveContainer width="100%" height={300}>
                 <LineChart data={dadosGrafico}>
@@ -521,10 +521,56 @@ export function Financiamento() {
             </div>
 
             {/* Tabela */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-6">Evolução Mensal - {sistema}</h2>
-              
-              <div className="overflow-auto max-h-96 border border-gray-200 rounded-lg">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 md:p-6">
+              <h2 className="text-lg md:text-xl font-semibold text-gray-900 mb-4 md:mb-6">Evolução Mensal - {sistema}</h2>
+
+              {/* Mobile: cards empilhados */}
+              <div className="md:hidden space-y-3">
+                {resultado.evolucaoMensal.map((row) => (
+                  <div key={row.mes} className="border border-gray-200 rounded-lg p-3">
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="font-semibold text-sm text-gray-900">{row.mes} | {row.data}</span>
+                    </div>
+                    <div className="space-y-1 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">Saldo inicial</span>
+                        <span className="font-medium">{formatCurrency(row.saldoInicial)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">Juros</span>
+                        <span className="font-medium">{formatCurrency(row.juros)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">Amortização</span>
+                        <span className="font-medium">{formatCurrency(row.amortizacao)}</span>
+                      </div>
+                      {resultado.resumo.totalAmortizacaoExtra > 0 && (
+                        <div className="flex justify-between">
+                          <span className="text-gray-500">Amort. extra</span>
+                          <span className="font-medium">{formatCurrency(row.amortizacaoExtra)}</span>
+                        </div>
+                      )}
+                      {resultado.resumo.totalTaxasSeguros > 0 && (
+                        <div className="flex justify-between">
+                          <span className="text-gray-500">Taxa/seguro</span>
+                          <span className="font-medium">{formatCurrency(row.taxaSeguro)}</span>
+                        </div>
+                      )}
+                      <div className="flex justify-between pt-1 border-t border-gray-100">
+                        <span className="text-gray-500">Parcela total</span>
+                        <span className="font-semibold">{formatCurrency(row.parcelaTotal)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">Saldo final</span>
+                        <span className="font-medium">{formatCurrency(row.saldoFinal)}</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Desktop: tabela */}
+              <div className="hidden md:block overflow-auto max-h-96 border border-gray-200 rounded-lg">
                 <table className="w-full text-sm">
                   <thead className="bg-gray-50 sticky top-0">
                     <tr>
