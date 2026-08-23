@@ -101,3 +101,40 @@ export interface ResultadoFinanciamento {
   };
   evolucaoMensal: ParcelaMensal[];
 }
+
+// v2 - Amortização extra e taxas/seguros
+export interface AmortizacaoExtra {
+  mes: number;
+  valor: number;
+  tipo: 'prazo' | 'parcela';
+}
+
+export interface TaxaSeguro {
+  mesInicial: number;
+  mesFinal: number;
+  valorMensal: number;
+}
+
+export interface InputFinanciamentoV2 extends InputFinanciamento {
+  amortizacoesExtras?: AmortizacaoExtra[];
+  taxasSeguros?: TaxaSeguro[];
+}
+
+export interface ParcelaMensalV2 extends ParcelaMensal {
+  amortizacaoExtra: number;
+  taxaSeguro: number;
+  parcelaTotal: number;
+}
+
+export interface ResultadoFinanciamentoV2 {
+  resumo: {
+    totalPago: number;
+    totalJuros: number;
+    totalAmortizacaoExtra: number;
+    totalTaxasSeguros: number;
+    primeiraParcela: number;
+    ultimaParcela: number;
+    numeroParcelas: number;
+  };
+  evolucaoMensal: ParcelaMensalV2[];
+}
