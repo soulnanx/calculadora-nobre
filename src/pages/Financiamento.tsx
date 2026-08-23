@@ -23,8 +23,8 @@ export function Financiamento() {
   const [valor, setValor] = useState(300000);
   const [taxaJuros, setTaxaJuros] = useState(10);
   const [taxaPeriodicidade, setTaxaPeriodicidade] = useState<'mensal' | 'anual'>('anual');
-  const [prazo, setPrazo] = useState(30);
-  const [prazoUnidade, setPrazoUnidade] = useState<'meses' | 'anos'>('anos');
+  const [prazo, setPrazo] = useState(150);
+  const [prazoUnidade, setPrazoUnidade] = useState<'meses' | 'anos'>('meses');
   const [sistema, setSistema] = useState<'SAC' | 'Price'>('SAC');
   const [comparar, setComparar] = useState(false);
   const [amortizacoesExtras, setAmortizacoesExtras] = useState<AmortizacaoExtra[]>([]);
@@ -64,22 +64,35 @@ export function Financiamento() {
   }, [input, comparar, sistema]);
 
   const dadosGrafico = useMemo(() => {
+    const amostrar = (arr: typeof resultado.evolucaoMensal) => {
+      const MAX_PONTOS = 360;
+      if (arr.length <= MAX_PONTOS) return arr;
+      const passo = Math.ceil(arr.length / MAX_PONTOS);
+      return arr.filter((_, i) => i % passo === 0 || i === arr.length - 1);
+    };
+
     if (comparar && resultadoComparacao) {
-      const maxMeses = Math.max(resultado.evolucaoMensal.length, resultadoComparacao.evolucaoMensal.length);
+      const evolucao = amostrar(resultado.evolucaoMensal);
+      const evolucaoComp = amostrar(resultadoComparacao.evolucaoMensal);
+      const maxMeses = Math.max(evolucao.length, evolucaoComp.length);
       return Array.from({ length: maxMeses }, (_, i) => ({
-        mes: i + 1,
-        saldoDevedor: resultado.evolucaoMensal[i]?.saldoFinal || 0,
-        parcela: resultado.evolucaoMensal[i]?.parcelaTotal || 0,
-        saldoDevedorComparacao: resultadoComparacao.evolucaoMensal[i]?.saldoFinal || 0,
-        parcelaComparacao: resultadoComparacao.evolucaoMensal[i]?.parcelaTotal || 0,
+        mes: evolucao[i]?.mes ?? evolucaoComp[i]?.mes ?? i + 1,
+        saldoDevedor: evolucao[i]?.saldoFinal || 0,
+        parcela: evolucao[i]?.parcelaTotal || 0,
+        saldoDevedorComparacao: evolucaoComp[i]?.saldoFinal || 0,
+        parcelaComparacao: evolucaoComp[i]?.parcelaTotal || 0,
       }));
     }
-    return resultado.evolucaoMensal.map((p) => ({
+    return amostrar(resultado.evolucaoMensal).map((p) => ({
       mes: p.mes,
       saldoDevedor: p.saldoFinal,
       parcela: p.parcelaTotal,
     }));
   }, [resultado, resultadoComparacao, comparar]);
+
+  const MAX_LINHAS_TABELA = 120;
+  const linhasTabela = resultado.evolucaoMensal.slice(0, MAX_LINHAS_TABELA);
+  const tabelaTruncada = resultado.evolucaoMensal.length > MAX_LINHAS_TABELA;
 
   const adicionarAmortizacao = () => {
     setAmortizacoesExtras([...amortizacoesExtras, { mes: 12, valor: 10000, tipo: 'prazo' }]);
@@ -192,7 +205,11 @@ export function Financiamento() {
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Prazo
                 </label>
-                <NumberInput value={prazo} onChange={setPrazo} />
+                <NumberInput
+                  value={prazo}
+                  onChange={(v) => setPrazo(Math.min(v, prazoUnidade === 'meses' ? 480 : 40))}
+                  max={prazoUnidade === 'meses' ? 480 : 40}
+                />
                 <div className="mt-2">
                   <RadioGroup
                     name="prazoUnidade"
@@ -532,7 +549,7 @@ export function Financiamento() {
 
               {/* Mobile: cards empilhados */}
               <div className="md:hidden space-y-3">
-                {resultado.evolucaoMensal.map((row) => (
+                {linhasTabela.map((row) => (
                   <div key={row.mes} className="border border-gray-200 rounded-lg p-3">
                     <div className="flex justify-between items-center mb-2">
                       <span className="font-semibold text-sm text-gray-900">{row.mes} | {row.data}</span>
@@ -595,7 +612,7 @@ export function Financiamento() {
                     </tr>
                   </thead>
                   <tbody>
-                    {resultado.evolucaoMensal.map((row) => (
+                    {linhasTabela.map((row) => (
                       <tr key={row.mes} className="border-t border-gray-200 hover:bg-gray-50">
                         <td className="px-4 py-2">{row.mes} | {row.data}</td>
                         <td className="px-4 py-2 text-right">{formatCurrency(row.saldoInicial)}</td>
@@ -614,6 +631,12 @@ export function Financiamento() {
                   </tbody>
                 </table>
               </div>
+
+              {tabelaTruncada && (
+                <p className="mt-3 text-sm text-gray-500">
+                  Mostrando as primeiras {MAX_LINHAS_TABELA} parcelas de {resultado.evolucaoMensal.length}.
+                </p>
+              )}
             </div>
             </>
             )}
