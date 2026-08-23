@@ -280,4 +280,87 @@ describe('calcularFinanciamentoV2', () => {
     expect(resultado.evolucaoMensal[5].amortizacaoExtra).toBe(20000);
     expect(resultado.evolucaoMensal[0].taxaSeguro).toBe(50);
   });
+
+  it('deve gerar datas das parcelas a partir da data de início', () => {
+    const input = {
+      valor: 100000,
+      taxaJuros: 1,
+      taxaPeriodicidade: 'mensal' as const,
+      prazo: 12,
+      prazoUnidade: 'meses' as const,
+      sistema: 'SAC' as const,
+      dataInicio: '2026-08',
+    };
+
+    const resultado = calcularFinanciamentoV2(input);
+
+    expect(resultado.evolucaoMensal[0].data).toBe('09/2026');
+    expect(resultado.evolucaoMensal[1].data).toBe('10/2026');
+    expect(resultado.evolucaoMensal[11].data).toBe('08/2027');
+    expect(resultado.resumo.dataUltimaParcela).toBe('08/2027');
+  });
+
+  it('deve validar SAC contra site de referência (115688.99, 9.89% aa, 36 meses)', () => {
+    const input = {
+      valor: 115688.99,
+      taxaJuros: 9.89,
+      taxaPeriodicidade: 'anual' as const,
+      prazo: 36,
+      prazoUnidade: 'meses' as const,
+      sistema: 'SAC' as const,
+      dataInicio: '2026-08',
+    };
+
+    const resultado = calcularFinanciamentoV2(input);
+    const primeira = resultado.evolucaoMensal[0];
+    const ultima = resultado.evolucaoMensal[35];
+
+    // Amortização constante = 115688.99 / 36 = 3213.58
+    expect(primeira.amortizacao).toBeCloseTo(3213.58, 2);
+    // Parcela 1: juros 912.80 + amortização 3213.58 = 4126.38
+    expect(primeira.juros).toBeCloseTo(912.80, 2);
+    expect(primeira.parcelaTotal).toBeCloseTo(4126.38, 2);
+    // Parcela 36: juros 25.36 + amortização 3213.58 = 3238.94
+    expect(ultima.juros).toBeCloseTo(25.36, 2);
+    expect(ultima.parcelaTotal).toBeCloseTo(3238.94, 2);
+    // Total juros: 16886.77, Total pago: 132575.76
+    expect(resultado.resumo.totalJuros).toBeCloseTo(16886.77, 2);
+    expect(resultado.resumo.totalPago).toBeCloseTo(132575.76, 2);
+    // Datas
+    expect(primeira.data).toBe('09/2026');
+    expect(ultima.data).toBe('08/2029');
+    expect(resultado.resumo.dataUltimaParcela).toBe('08/2029');
+  });
+
+  it('deve aplicar amortização extra APÓS pagar a parcela', () => {
+    const input = {
+      valor: 100000,
+      taxaJuros: 1,
+      taxaPeriodicidade: 'mensal' as const,
+      prazo: 12,
+      prazoUnidade: 'meses' as const,
+      sistema: 'SAC' as const,
+      amortizacoesExtras: [
+        { mes: 3, valor: 10000, tipo: 'prazo' as const }
+      ],
+    };
+
+    const resultado = calcularFinanciamentoV2(input);
+    const mes3 = resultado.evolucaoMensal[2];
+    const mes4 = resultado.evolucaoMensal[3];
+
+    // No mês 3, a amortização extra é aplicada após a parcela
+    // Saldo após 2 parcelas: 100000 - 2*(100000/12) = 83333.33
+    // Parcela do mês 3: 8333.33 (amort) + 833.33 (juros) = 9166.67
+    // Saldo após parcela do mês 3: 75000
+    // Após extra: 75000 - 10000 = 65000
+    expect(mes3.amortizacaoExtra).toBe(10000);
+    expect(mes3.saldoFinal).toBeCloseTo(65000, 2);
+    expect(mes3.saldoInicial).toBeCloseTo(83333.33, 2);
+    expect(mes3.amortizacao).toBeCloseTo(8333.33, 2);
+    expect(mes3.parcela).toBeCloseTo(9166.67, 2);
+    // Mês 4 continua com amortização constante
+    expect(mes4.amortizacao).toBeCloseTo(8333.33, 2);
+    expect(mes4.saldoFinal).toBeCloseTo(56666.67, 2);
+  });
 });

@@ -118,12 +118,14 @@ export interface TaxaSeguro {
 export interface InputFinanciamentoV2 extends InputFinanciamento {
   amortizacoesExtras?: AmortizacaoExtra[];
   taxasSeguros?: TaxaSeguro[];
+  dataInicio?: string;
 }
 
 export interface ParcelaMensalV2 extends ParcelaMensal {
   amortizacaoExtra: number;
   taxaSeguro: number;
   parcelaTotal: number;
+  data: string;
 }
 
 export interface ResultadoFinanciamentoV2 {
@@ -135,6 +137,7 @@ export interface ResultadoFinanciamentoV2 {
     primeiraParcela: number;
     ultimaParcela: number;
     numeroParcelas: number;
+    dataUltimaParcela: string;
   };
   evolucaoMensal: ParcelaMensalV2[];
 }

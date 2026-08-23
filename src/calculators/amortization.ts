@@ -12,19 +12,9 @@ import {
 export function calcularFinanciamento(
   input: InputFinanciamento
 ): ResultadoFinanciamento {
-  // Normalizar taxa para mensal
-  let taxaMensal = input.taxaJuros / 100;
-  if (input.taxaPeriodicidade === 'anual') {
-    taxaMensal = Math.pow(1 + taxaMensal, 1 / 12) - 1;
-  }
+  let taxaMensal = normalizarTaxaMensal(input.taxaJuros, input.taxaPeriodicidade);
+  let prazoMeses = normalizarPrazoMeses(input.prazo, input.prazoUnidade);
 
-  // Normalizar período para meses
-  let prazoMeses = input.prazo;
-  if (input.prazoUnidade === 'anos') {
-    prazoMeses = input.prazo * 12;
-  }
-
-  // Calcular evolução mensal baseado no sistema
   const evolucaoMensal: ParcelaMensal[] = [];
   
   if (input.sistema === 'SAC') {
@@ -33,7 +23,6 @@ export function calcularFinanciamento(
     calcularPrice(input.valor, taxaMensal, prazoMeses, evolucaoMensal);
   }
 
-  // Calcular resumo
   const totalPago = evolucaoMensal.reduce((sum, p) => sum + p.parcela, 0);
   const totalJuros = evolucaoMensal.reduce((sum, p) => sum + p.juros, 0);
 
@@ -47,6 +36,18 @@ export function calcularFinanciamento(
     },
     evolucaoMensal,
   };
+}
+
+function normalizarTaxaMensal(taxaJuros: number, taxaPeriodicidade: 'mensal' | 'anual'): number {
+  let taxaMensal = taxaJuros / 100;
+  if (taxaPeriodicidade === 'anual') {
+    taxaMensal = Math.pow(1 + taxaMensal, 1 / 12) - 1;
+  }
+  return taxaMensal;
+}
+
+function normalizarPrazoMeses(prazo: number, prazoUnidade: 'meses' | 'anos'): number {
+  return prazoUnidade === 'anos' ? prazo * 12 : prazo;
 }
 
 function calcularSAC(
@@ -82,15 +83,7 @@ function calcularPrice(
   prazoMeses: number,
   evolucao: ParcelaMensal[]
 ): void {
-  let parcelaFixa: number;
-  
-  if (taxaMensal === 0) {
-    parcelaFixa = valor / prazoMeses;
-  } else {
-    parcelaFixa = valor * (taxaMensal * Math.pow(1 + taxaMensal, prazoMeses)) / 
-                  (Math.pow(1 + taxaMensal, prazoMeses) - 1);
-  }
-
+  let parcelaFixa = calcularPMT(valor, taxaMensal, prazoMeses);
   let saldoDevedor = valor;
 
   for (let mes = 1; mes <= prazoMeses; mes++) {
@@ -111,33 +104,46 @@ function calcularPrice(
   }
 }
 
+function calcularPMT(valor: number, taxaMensal: number, prazoMeses: number): number {
+  if (taxaMensal === 0) {
+    return valor / prazoMeses;
+  }
+  return valor * (taxaMensal * Math.pow(1 + taxaMensal, prazoMeses)) / 
+        (Math.pow(1 + taxaMensal, prazoMeses) - 1);
+}
+
+function gerarData(mes: number, dataInicio?: string): string {
+  if (!dataInicio) return String(mes);
+  const [ano, mesInicial] = dataInicio.split('-').map(Number);
+  const data = new Date(ano, mesInicial - 1 + mes, 1);
+  const mm = String(data.getMonth() + 1).padStart(2, '0');
+  return `${mm}/${data.getFullYear()}`;
+}
+
 export function calcularFinanciamentoV2(
   input: InputFinanciamentoV2
 ): ResultadoFinanciamentoV2 {
-  let taxaMensal = input.taxaJuros / 100;
-  if (input.taxaPeriodicidade === 'anual') {
-    taxaMensal = Math.pow(1 + taxaMensal, 1 / 12) - 1;
-  }
-
-  let prazoMeses = input.prazo;
-  if (input.prazoUnidade === 'anos') {
-    prazoMeses = input.prazo * 12;
-  }
+  const taxaMensal = normalizarTaxaMensal(input.taxaJuros, input.taxaPeriodicidade);
+  const prazoMeses = normalizarPrazoMeses(input.prazo, input.prazoUnidade);
+  const amortizacoesExtras = input.amortizacoesExtras || [];
+  const taxasSeguros = input.taxasSeguros || [];
 
   const evolucaoMensal: ParcelaMensalV2[] = [];
   
   if (input.sistema === 'SAC') {
     calcularSACV2(input.valor, taxaMensal, prazoMeses, evolucaoMensal, 
-                  input.amortizacoesExtras || [], input.taxasSeguros || []);
+                  amortizacoesExtras, taxasSeguros, input.dataInicio);
   } else {
     calcularPriceV2(input.valor, taxaMensal, prazoMeses, evolucaoMensal,
-                    input.amortizacoesExtras || [], input.taxasSeguros || []);
+                    amortizacoesExtras, taxasSeguros, input.dataInicio);
   }
 
   const totalPago = evolucaoMensal.reduce((sum, p) => sum + p.parcelaTotal, 0);
   const totalJuros = evolucaoMensal.reduce((sum, p) => sum + p.juros, 0);
   const totalAmortizacaoExtra = evolucaoMensal.reduce((sum, p) => sum + p.amortizacaoExtra, 0);
   const totalTaxasSeguros = evolucaoMensal.reduce((sum, p) => sum + p.taxaSeguro, 0);
+
+  const ultima = evolucaoMensal[evolucaoMensal.length - 1];
 
   return {
     resumo: {
@@ -146,8 +152,9 @@ export function calcularFinanciamentoV2(
       totalAmortizacaoExtra,
       totalTaxasSeguros,
       primeiraParcela: evolucaoMensal[0].parcelaTotal,
-      ultimaParcela: evolucaoMensal[evolucaoMensal.length - 1].parcelaTotal,
+      ultimaParcela: ultima.parcelaTotal,
       numeroParcelas: evolucaoMensal.length,
+      dataUltimaParcela: ultima.data,
     },
     evolucaoMensal,
   };
@@ -159,61 +166,72 @@ function calcularTaxaSeguroMes(mes: number, taxasSeguros: TaxaSeguro[]): number 
     .reduce((sum, t) => sum + t.valorMensal, 0);
 }
 
+function aplicarAmortizacoesExtras(
+  mes: number,
+  saldoDevedor: number,
+  amortizacoesExtras: AmortizacaoExtra[]
+): { novoSaldo: number; totalExtra: number; tipoAmort: 'prazo' | 'parcela' | null } {
+  const extras = amortizacoesExtras.filter(a => a.mes === mes);
+  let novoSaldo = saldoDevedor;
+  let totalExtra = 0;
+  let tipoAmort: 'prazo' | 'parcela' | null = null;
+
+  extras.forEach(a => {
+    novoSaldo -= a.valor;
+    totalExtra += a.valor;
+    if (!tipoAmort) tipoAmort = a.tipo;
+  });
+
+  return { novoSaldo, totalExtra, tipoAmort };
+}
+
 function calcularSACV2(
   valor: number,
   taxaMensal: number,
   prazoMeses: number,
   evolucao: ParcelaMensalV2[],
   amortizacoesExtras: AmortizacaoExtra[],
-  taxasSeguros: TaxaSeguro[]
+  taxasSeguros: TaxaSeguro[],
+  dataInicio?: string
 ): void {
-  const amortizacaoConstanteOriginal = valor / prazoMeses;
+  let amortizacaoConstante = valor / prazoMeses;
   let saldoDevedor = valor;
-  let amortizacaoConstante = amortizacaoConstanteOriginal;
   let mes = 1;
 
   while (saldoDevedor > 0.01 && mes <= prazoMeses * 2) {
     const saldoInicial = saldoDevedor;
     const juros = saldoDevedor * taxaMensal;
     const taxaSeguro = calcularTaxaSeguroMes(mes, taxasSeguros);
-    
-    let amortizacaoExtra = 0;
-    const amortExtraMes = amortizacoesExtras.filter(a => a.mes === mes);
-    
-    if (amortExtraMes.length > 0) {
-      amortExtraMes.forEach(a => {
-        if (a.tipo === 'prazo') {
-          saldoDevedor -= a.valor;
-          amortizacaoExtra += a.valor;
-        }
-      });
-    }
-    
+
+    // 1. Pagar a parcela do mês
     const amortizacao = Math.min(amortizacaoConstante, saldoDevedor);
     const parcelaBase = amortizacao + juros;
     const parcelaTotal = parcelaBase + taxaSeguro;
     
     saldoDevedor -= amortizacao;
-    
-    if (amortExtraMes.some(a => a.tipo === 'parcela')) {
-      const totalAmortParcela = amortExtraMes
-        .filter(a => a.tipo === 'parcela')
-        .reduce((sum, a) => sum + a.valor, 0);
-      saldoDevedor -= totalAmortParcela;
-      amortizacaoExtra += totalAmortParcela;
-      
+
+    // 2. Aplicar amortização extra APÓS pagar a parcela
+    const { novoSaldo, totalExtra, tipoAmort } = aplicarAmortizacoesExtras(mes, saldoDevedor, amortizacoesExtras);
+    saldoDevedor = novoSaldo;
+
+    if (tipoAmort === 'prazo') {
+      // Mantém amortização constante, reduz prazo: parcelas restantes = saldo / amortizacaoConstante
+      // O while termina naturalmente quando saldo <= 0
+    } else if (tipoAmort === 'parcela') {
+      // Mantém prazo, recalcula amortização para os meses restantes
       const mesesRestantes = prazoMeses - mes;
-      if (mesesRestantes > 0) {
+      if (mesesRestantes > 0 && saldoDevedor > 0) {
         amortizacaoConstante = saldoDevedor / mesesRestantes;
       }
     }
 
     evolucao.push({
       mes,
+      data: gerarData(mes, dataInicio),
       saldoInicial,
       juros,
       amortizacao,
-      amortizacaoExtra,
+      amortizacaoExtra: totalExtra,
       taxaSeguro,
       parcela: parcelaBase,
       parcelaTotal,
@@ -230,77 +248,62 @@ function calcularPriceV2(
   prazoMeses: number,
   evolucao: ParcelaMensalV2[],
   amortizacoesExtras: AmortizacaoExtra[],
-  taxasSeguros: TaxaSeguro[]
+  taxasSeguros: TaxaSeguro[],
+  dataInicio?: string
 ): void {
-  let parcelaFixa: number;
-  
-  if (taxaMensal === 0) {
-    parcelaFixa = valor / prazoMeses;
-  } else {
-    parcelaFixa = valor * (taxaMensal * Math.pow(1 + taxaMensal, prazoMeses)) / 
-                  (Math.pow(1 + taxaMensal, prazoMeses) - 1);
-  }
-
+  let parcelaFixa = calcularPMT(valor, taxaMensal, prazoMeses);
   let saldoDevedor = valor;
   let mes = 1;
-  let mesesRestantes = prazoMeses;
+  let parcelasRestantes = prazoMeses;
 
   while (saldoDevedor > 0.01 && mes <= prazoMeses * 2) {
     const saldoInicial = saldoDevedor;
     const juros = saldoDevedor * taxaMensal;
     const taxaSeguro = calcularTaxaSeguroMes(mes, taxasSeguros);
-    
-    let amortizacaoExtra = 0;
-    const amortExtraMes = amortizacoesExtras.filter(a => a.mes === mes);
-    
-    if (amortExtraMes.length > 0) {
-      amortExtraMes.forEach(a => {
-        if (a.tipo === 'prazo') {
-          saldoDevedor -= a.valor;
-          amortizacaoExtra += a.valor;
-          
-          if (taxaMensal > 0 && parcelaFixa > saldoDevedor * taxaMensal) {
-            mesesRestantes = Math.log(parcelaFixa / (parcelaFixa - saldoDevedor * taxaMensal)) / Math.log(1 + taxaMensal);
-          }
-        }
-      });
-    }
-    
-    const amortizacao = parcelaFixa - juros;
+
+    // 1. Pagar a parcela do mês
+    const amortizacao = Math.min(parcelaFixa - juros, saldoDevedor);
     const parcelaBase = parcelaFixa;
     const parcelaTotal = parcelaBase + taxaSeguro;
     
     saldoDevedor -= amortizacao;
-    
-    if (amortExtraMes.some(a => a.tipo === 'parcela')) {
-      const totalAmortParcela = amortExtraMes
-        .filter(a => a.tipo === 'parcela')
-        .reduce((sum, a) => sum + a.valor, 0);
-      saldoDevedor -= totalAmortParcela;
-      amortizacaoExtra += totalAmortParcela;
-      
-      mesesRestantes = prazoMeses - mes;
-      if (mesesRestantes > 0 && taxaMensal > 0) {
-        parcelaFixa = saldoDevedor * (taxaMensal * Math.pow(1 + taxaMensal, mesesRestantes)) / 
-                      (Math.pow(1 + taxaMensal, mesesRestantes) - 1);
-      } else if (mesesRestantes > 0) {
-        parcelaFixa = saldoDevedor / mesesRestantes;
+
+    // 2. Aplicar amortização extra APÓS pagar a parcela
+    const { novoSaldo, totalExtra, tipoAmort } = aplicarAmortizacoesExtras(mes, saldoDevedor, amortizacoesExtras);
+    saldoDevedor = novoSaldo;
+
+    if (tipoAmort === 'prazo') {
+      // Mantém parcela fixa, recalcula parcelas restantes
+      if (taxaMensal > 0 && parcelaFixa > saldoDevedor * taxaMensal) {
+        parcelasRestantes = Math.ceil(
+          Math.log(parcelaFixa / (parcelaFixa - saldoDevedor * taxaMensal)) / Math.log(1 + taxaMensal)
+        );
+      } else if (taxaMensal === 0) {
+        parcelasRestantes = Math.ceil(saldoDevedor / parcelaFixa);
+      }
+    } else if (tipoAmort === 'parcela') {
+      // Mantém prazo, recalcula parcela para os meses restantes
+      const mesesRestantes = prazoMeses - mes;
+      if (mesesRestantes > 0 && saldoDevedor > 0) {
+        parcelaFixa = calcularPMT(saldoDevedor, taxaMensal, mesesRestantes);
+        parcelasRestantes = mesesRestantes;
       }
     }
 
     evolucao.push({
       mes,
+      data: gerarData(mes, dataInicio),
       saldoInicial,
       juros,
       amortizacao,
-      amortizacaoExtra,
+      amortizacaoExtra: totalExtra,
       taxaSeguro,
       parcela: parcelaBase,
       parcelaTotal,
       saldoFinal: Math.max(0, saldoDevedor),
     });
 
-    mesesRestantes--;
+    parcelasRestantes--;
     mes++;
   }
 }
