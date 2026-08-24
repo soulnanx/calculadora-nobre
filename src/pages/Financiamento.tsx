@@ -167,7 +167,7 @@ export function Financiamento() {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 py-8">
+      <main className="max-w-7xl mx-auto px-4 py-4 md:py-8">
         <h1 className="text-xl md:text-3xl font-bold text-gray-900 mb-4 md:mb-8">Calculadora de Financiamento</h1>
 
         <div className="max-w-3xl mx-auto space-y-4 md:space-y-8">
@@ -175,7 +175,7 @@ export function Financiamento() {
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 md:p-6">
             <h2 className="text-lg md:text-xl font-semibold text-gray-900 mb-4 md:mb-6">Parâmetros</h2>
 
-            <div className="space-y-4 md:space-y-6">
+            <div className="space-y-3 md:space-y-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Valor do financiamento
@@ -267,7 +267,7 @@ export function Financiamento() {
               <div className="border-t border-gray-200 pt-6">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Amortizações Extras</h3>
 
-                <div className="space-y-4 mb-6 p-4 bg-gray-50 rounded-lg">
+                <div className="space-y-3 md:space-y-4 mb-4 md:mb-6 p-3 md:p-4 bg-gray-50 rounded-lg">
                   <div>
                     <label className="block text-xs text-gray-600 mb-1">
                       Parcelas (ex: 1-5, 3,7,12-15,20)
@@ -300,14 +300,14 @@ export function Financiamento() {
                     <button
                       onClick={() => aplicarAmortizacaoNotacao('adicionar')}
                       disabled={valorAmortizacao <= 0}
-                      className="flex-1 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
+                      className="flex-1 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50 text-sm"
                     >
                       Adicionar em {parsearParcelas(notacaoParcelas).length} parcela(s)
                     </button>
                     <button
                       onClick={() => aplicarAmortizacaoNotacao('substituir')}
                       disabled={valorAmortizacao <= 0}
-                      className="flex-1 px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 disabled:opacity-50"
+                      className="flex-1 px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 disabled:opacity-50 text-sm"
                     >
                       Substituir em {parsearParcelas(notacaoParcelas).length} parcela(s)
                     </button>
@@ -447,7 +447,7 @@ export function Financiamento() {
           {/* Resultado */}
           <div className="space-y-8">
             {resultado.evolucaoMensal.length === 0 ? (
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 md:p-6">
+<div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 md:p-6">
                 <h2 className="text-lg md:text-xl font-semibold text-gray-900 mb-4 md:mb-6">Resultado - {sistema}</h2>
                 <p className="text-gray-600">
                   Preencha o valor do financiamento e o prazo para calcular a simulação.
