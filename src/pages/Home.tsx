@@ -1,5 +1,8 @@
 import { Link } from 'react-router-dom';
 
+// Versão exibida na tela inicial — atualizar manualmente (major.minor.patch)
+const APP_VERSION = '1.0.0';
+
 const calculadoras = [
   {
     path: '/juros-compostos',
@@ -25,8 +28,9 @@ export function Home() {
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 py-6">
+        <div className="max-w-7xl mx-auto px-4 py-6 flex items-center gap-3">
           <h1 className="text-3xl font-bold text-gray-900">Calculadora Nobre</h1>
+          <span className="text-sm text-gray-400 border border-gray-200 rounded px-2 py-0.5">v{APP_VERSION}</span>
         </div>
       </header>
 
