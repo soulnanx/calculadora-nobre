@@ -2,6 +2,11 @@
 
 Uma coleção de calculadoras financeiras para ajudar no planejamento e tomada de decisões financeiras.
 
+**Recursos gerais:**
+- **PWA instalável** — adicione à tela inicial e use offline
+- **Layout responsivo** — otimizado para mobile e desktop
+- **Versionado** — versão exibida na tela inicial, atualizada manualmente (major.minor.patch)
+
 ## Calculadoras Disponíveis
 
 ### 📈 Juros Compostos
@@ -33,6 +38,7 @@ Simule financiamento imobiliário com sistemas SAC e Price.
 - Sistemas SAC (parcelas decrescentes) e Price (parcelas fixas)
 - Comparação lado a lado dos dois sistemas
 - Amortizações extras com notação de parcelas (ex: `1-5`, `3,7,12-15,20`)
+- Estratégias de amortização **por prazo** (reduz o prazo, amortização crescente) e **por parcela** (mantém o prazo, amortização decrescente), fiéis ao simulador de referência
 - Botões "Adicionar" (soma valores) e "Substituir" (sobrescreve) por parcela
 - Gerador de sequência de parcelas (começando em X, a cada Y, até Z)
 - Taxas e seguros mensais
@@ -48,6 +54,7 @@ Simule financiamento imobiliário com sistemas SAC e Price.
 - **Tailwind CSS** - Estilização
 - **Recharts** - Gráficos
 - **React Router** - Navegação
+- **vite-plugin-pwa** - PWA, service worker (Workbox) e manifest
 - **Vitest** - Testes unitários
 
 ## Instalação

@@ -49,60 +49,54 @@ Lista de taxas/seguros, cada uma com:
 
 #### Amortização Extra por Prazo
 
-**Conceito:** Após pagar a amortização extra, o saldo devedor diminui, mas o valor da amortização constante permanece o mesmo (no SAC) ou o valor da parcela permanece o mesmo (no Price). O número de parcelas restantes é recalculado.
+**Conceito:** A amortização extra reduz o saldo devedor e também o prazo. A cada mês a amortização é recalculada como `saldo / termo_restante`; o termo cai 1 mês (passagem normal) e mais 1 mês quando o valor da extra equivale a uma amortização líquida. Semântica fiel ao simulador de referência (simuladoramortizacao.com.br).
 
 **Fórmula (SAC):**
 ```
-Após amortização extra no mês M:
-  novo_saldo = saldo_atual - valor_amortizacao
-  amortizacao_constante = valor_original / prazo_original (permanece igual)
-  numero_parcelas_restantes = novo_saldo / amortizacao_constante
+amortizacao_m = saldo_{m-1} / termo_restante
+extra_efetiva = min(valor_extra, saldo_apos_parcela)      (nunca excede o saldo)
+termo_restante -= 1                                       (passagem normal do mês)
+se extra_efetiva > 0:
+  termo_restante -= round(valor_extra / (amortizacao_m - saldo_apos_parcela × taxa))
 ```
 
 **Fórmula (Price):**
 ```
-Após amortização extra no mês M:
-  novo_saldo = saldo_atual - valor_amortizacao
-  parcela_fixa = parcela_fixa_original (permanece igual)
-  numero_parcelas_restantes = ln(parcela_fixa / (parcela_fixa - novo_saldo × taxa)) / ln(1 + taxa)
+novo_saldo = saldo_atual - valor_amortizacao
+parcela_fixa = parcela_fixa_original (permanece igual)
+numero_parcelas_restantes = ln(parcela_fixa / (parcela_fixa - novo_saldo × taxa)) / ln(1 + taxa)
 ```
 
-**Exemplo de validação:**
-- Financiamento: R$ 100.000, taxa 1% ao mês, 12 meses, SAC
-- Amortização constante: R$ 8.333,33
-- Parcela mês 1: R$ 9.333,33 (8.333,33 + 1.000 juros)
-- Saldo após mês 1: R$ 91.666,67
-
-**Cenário: Amortização de R$ 20.000 após mês 6**
-- Saldo após mês 6 (sem amortização): R$ 50.000
-- Amortização extra: R$ 20.000
-- Novo saldo: R$ 30.000
-- Amortização constante permanece: R$ 8.333,33
-- Novas parcelas restantes: 30.000 / 8.333,33 = 3,6 ≈ 4 meses
-- **Total de parcelas: 6 + 4 = 10 meses** (em vez de 12)
+**Validação (SAC, dados extraídos do simulador de referência):**
+- Financiamento: R$ 115.688,99, taxa 9,89% a.a., 36 meses, SAC
+- Amortização extra: R$ 2.500 nos meses 1-36, por prazo
+- **Resultado: 19 parcelas** (prazo reduzido), amortização crescente (3.213,58 → 5.892,50)
+- Última parcela paga o saldo (3.419,27) sem extra; total de juros: 9.322,35
 
 #### Amortização Extra por Parcela
 
-**Conceito:** Após pagar a amortização extra, o saldo devedor diminui, mas o número de parcelas restantes permanece o mesmo. O valor da parcela é recalculado.
+**Conceito:** Após pagar a amortização extra, o prazo permanece o mesmo; a amortização (SAC) ou a parcela (Price) é recalculada sobre o novo saldo, reduzindo o valor das parcelas.
+
+**Fórmula (SAC):**
+```
+amortizacao_m = saldo_{m-1} / termo_restante
+termo_restante -= 1            (prazo mantido)
+extra_efetiva = min(valor_extra, saldo_apos_parcela)
+```
 
 **Fórmula (Price):**
 ```
-Após amortização extra no mês M:
-  novo_saldo = saldo_atual - valor_amortizacao
-  parcelas_restantes = prazo_total - M
-  nova_parcela = novo_saldo × [taxa × (1+taxa)^parcelas_restantes] / [(1+taxa)^parcelas_restantes - 1]
+novo_saldo = saldo_atual - valor_amortizacao
+parcelas_restantes = prazo_total - M
+nova_parcela = novo_saldo × [taxa × (1+taxa)^parcelas_restantes] / [(1+taxa)^parcelas_restantes - 1]
 ```
 
-**Exemplo de validação:**
-- Financiamento: R$ 100.000, taxa 1% ao mês, 12 meses, Price
-- Parcela fixa: R$ 8.884,87
-- Saldo após mês 6: R$ 54.264,72
+**Validação (SAC, dados extraídos do simulador de referência):**
+- Mesmo cenário acima com extra por parcela
+- **Resultado: 26 parcelas**, amortização decrescente (3.213,58 → 169,05)
+- Extra do último mês limitada ao saldo (1.690,50); última parcela: 183,72; total de juros: 10.895,83
 
-**Cenário: Amortização de R$ 20.000 após mês 6**
-- Novo saldo: R$ 34.264,72
-- Parcelas restantes: 6
-- Nova parcela: 34.264,72 × [0,01 × (1,01)^6] / [(1,01)^6 - 1] = R$ 5.899,58
-- **Parcela diminui de R$ 8.884,87 para R$ 5.899,58**
+**Exemplo (Price):** R$ 100.000, taxa 1% a.m., 12 meses, amortização de R$ 20.000 após mês 6 → nova parcela: 34.264,72 × [0,01 × (1,01)^6] / [(1,01)^6 − 1] = **R$ 5.899,58** (era R$ 8.884,87)
 
 #### Taxas e Seguros
 
