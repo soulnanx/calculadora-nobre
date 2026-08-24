@@ -172,6 +172,22 @@ export function calcularFinanciamentoV2(
   const totalAmortizacaoExtra = evolucaoMensal.reduce((sum, p) => sum + p.amortizacaoExtra, 0);
   const totalTaxasSeguros = evolucaoMensal.reduce((sum, p) => sum + p.taxaSeguro, 0);
 
+  if (evolucaoMensal.length === 0) {
+    return {
+      resumo: {
+        totalPago: 0,
+        totalJuros: 0,
+        totalAmortizacaoExtra: 0,
+        totalTaxasSeguros: 0,
+        primeiraParcela: 0,
+        ultimaParcela: 0,
+        numeroParcelas: 0,
+        dataUltimaParcela: '',
+      },
+      evolucaoMensal,
+    };
+  }
+
   const ultima = evolucaoMensal[evolucaoMensal.length - 1];
 
   return {
