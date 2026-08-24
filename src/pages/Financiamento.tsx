@@ -170,7 +170,7 @@ export function Financiamento() {
       <main className="max-w-7xl mx-auto px-4 py-4 md:py-8">
         <h1 className="text-xl md:text-3xl font-bold text-gray-900 mb-4 md:mb-8">Calculadora de Financiamento</h1>
 
-        <div className="max-w-3xl mx-auto space-y-4 md:space-y-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-8 items-start">
           {/* Formulário */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 md:p-6">
             <h2 className="text-lg md:text-xl font-semibold text-gray-900 mb-4 md:mb-6">Parâmetros</h2>
@@ -355,7 +355,7 @@ export function Financiamento() {
 
                 <div className="divide-y divide-gray-100">
                 {amortizacoesExtras.map((amort, index) => (
-                  <div key={index} className="flex flex-wrap gap-2 items-end py-3 first:pt-0">
+                  <div key={index} className="grid grid-cols-2 md:flex md:flex-wrap gap-2 items-end py-3 first:pt-0">
                     <div className="flex-1 min-w-0">
                       <label className="block text-xs text-gray-600 mb-1">Mês</label>
                       <NumberInput
@@ -370,7 +370,7 @@ export function Financiamento() {
                         onChange={(v) => atualizarAmortizacao(index, 'valor', v)}
                       />
                     </div>
-                    <div className="w-full md:w-auto md:flex-1 min-w-0 order-4 md:order-none">
+                    <div className="w-full md:w-auto md:flex-1 min-w-0">
                       <label className="block text-xs text-gray-600 mb-1">Tipo</label>
                       <RadioGroup
                         name={`tipo-${index}`}
@@ -384,7 +384,7 @@ export function Financiamento() {
                     </div>
                     <button
                       onClick={() => removerAmortizacao(index)}
-                      className="px-3 py-2 bg-red-500 text-white rounded hover:bg-red-600 order-3 md:order-none"
+                      className="px-3 py-2 bg-red-500 text-white rounded hover:bg-red-600 justify-self-end md:justify-self-auto"
                     >
                       ×
                     </button>
@@ -403,7 +403,7 @@ export function Financiamento() {
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Taxas e Seguros</h3>
                 <div className="divide-y divide-gray-100">
                 {taxasSeguros.map((taxa, index) => (
-                  <div key={index} className="flex flex-wrap gap-2 items-end py-3 first:pt-0">
+                  <div key={index} className="grid grid-cols-2 md:flex md:flex-wrap gap-2 items-end py-3 first:pt-0">
                     <div className="flex-1 min-w-0">
                       <label className="block text-xs text-gray-600 mb-1">Mês Inicial</label>
                       <NumberInput
@@ -418,7 +418,7 @@ export function Financiamento() {
                         onChange={(v) => atualizarTaxa(index, 'mesFinal', v)}
                       />
                     </div>
-                    <div className="w-full md:w-auto md:flex-1 min-w-0 order-4 md:order-none">
+                    <div className="w-full md:w-auto md:flex-1 min-w-0">
                       <label className="block text-xs text-gray-600 mb-1">Valor Mensal</label>
                       <CurrencyInput
                         value={taxa.valorMensal}
@@ -427,7 +427,7 @@ export function Financiamento() {
                     </div>
                     <button
                       onClick={() => removerTaxa(index)}
-                      className="px-3 py-2 bg-red-500 text-white rounded hover:bg-red-600 order-3 md:order-none"
+                      className="px-3 py-2 bg-red-500 text-white rounded hover:bg-red-600 justify-self-end md:justify-self-auto"
                     >
                       ×
                     </button>
