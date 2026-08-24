@@ -160,11 +160,8 @@ describe('calcularFinanciamentoV2', () => {
 
     const resultado = calcularFinanciamentoV2(input);
 
-    // Amortização constante = 100000 / 12 = 8333.33
-    // Saldo após mês 6: 50000
-    // Após amortização: 30000
-    // Parcelas restantes: 30000 / 8333.33 = 3.6 ≈ 4 meses
-    // Total: 6 + 4 = 10 meses
+    // Amortização por prazo: reduz o prazo, com amortização recalculada sobre
+    // saldo e termo restante (semântica do simulador de referência)
     expect(resultado.resumo.numeroParcelas).toBeLessThanOrEqual(11);
     expect(resultado.resumo.numeroParcelas).toBeGreaterThanOrEqual(9);
     expect(resultado.resumo.totalAmortizacaoExtra).toBe(20000);
@@ -332,6 +329,88 @@ describe('calcularFinanciamentoV2', () => {
     expect(resultado.resumo.dataUltimaParcela).toBe('08/2029');
   });
 
+  it('deve validar SAC amortização por prazo contra site de referência (115688.99, 9.89% aa, 36m, extra 2500 em 1-36)', () => {
+    const input = {
+      valor: 115688.99,
+      taxaJuros: 9.89,
+      taxaPeriodicidade: 'anual' as const,
+      prazo: 36,
+      prazoUnidade: 'meses' as const,
+      sistema: 'SAC' as const,
+      dataInicio: '2026-08',
+      amortizacoesExtras: Array.from({ length: 36 }, (_, i) => ({ mes: i + 1, valor: 2500, tipo: 'prazo' as const })),
+    };
+
+    const resultado = calcularFinanciamentoV2(input);
+
+    // Referência: 19 parcelas, amortização crescente, última paga o saldo sem extra
+    expect(resultado.evolucaoMensal).toHaveLength(19);
+    const amorts = resultado.evolucaoMensal.map((p) => p.amortizacao);
+    const ref = [3213.58, 3234.57, 3257.53, 3282.78, 3310.73, 3341.92, 3377.0, 3416.86, 3462.7, 3516.18, 3579.7, 3656.82, 3753.22, 3878.54, 4050.86, 4309.34, 4761.67, 5892.5, 3392.5];
+    ref.forEach((v, i) => expect(amorts[i]).toBeCloseTo(v, 2));
+    const ultimo = resultado.evolucaoMensal[18];
+    expect(ultimo.amortizacaoExtra).toBe(0);
+    expect(ultimo.parcelaTotal).toBeCloseTo(3419.27, 2);
+    expect(resultado.resumo.numeroParcelas).toBe(19);
+    expect(resultado.resumo.totalAmortizacaoExtra).toBeCloseTo(45000, 1);
+    expect(resultado.resumo.totalJuros).toBeCloseTo(9322.35, 1);
+    expect(resultado.resumo.totalPago).toBeCloseTo(125011.34, 1);
+    expect(resultado.resumo.dataUltimaParcela).toBe('03/2028');
+  });
+
+  it('deve validar SAC amortização por parcela contra site de referência (extra 2500 em 1-36)', () => {
+    const input = {
+      valor: 115688.99,
+      taxaJuros: 9.89,
+      taxaPeriodicidade: 'anual' as const,
+      prazo: 36,
+      prazoUnidade: 'meses' as const,
+      sistema: 'SAC' as const,
+      dataInicio: '2026-08',
+      amortizacoesExtras: Array.from({ length: 36 }, (_, i) => ({ mes: i + 1, valor: 2500, tipo: 'parcela' as const })),
+    };
+
+    const resultado = calcularFinanciamentoV2(input);
+
+    // Referência: 26 parcelas, amortização decrescente, extra final limitada ao saldo
+    expect(resultado.evolucaoMensal).toHaveLength(26);
+    const amorts = resultado.evolucaoMensal.map((p) => p.amortizacao);
+    const ref = [3213.58, 3142.15, 3068.63, 2992.87, 2914.74, 2834.1, 2750.76, 2664.56, 2575.27, 2482.68, 2386.52, 2286.52, 2182.36, 2073.66, 1960.03, 1840.98, 1715.98, 1584.4, 1445.51, 1298.45, 1142.2, 975.54, 796.96, 604.66, 396.32, 169.05];
+    ref.forEach((v, i) => expect(amorts[i]).toBeCloseTo(v, 2));
+    const ultimo = resultado.evolucaoMensal[25];
+    expect(ultimo.amortizacaoExtra).toBeCloseTo(1690.5, 2);
+    expect(ultimo.parcelaTotal).toBeCloseTo(183.72, 2);
+    expect(resultado.resumo.numeroParcelas).toBe(26);
+    expect(resultado.resumo.totalAmortizacaoExtra).toBeCloseTo(64190.5, 1);
+    expect(resultado.resumo.totalJuros).toBeCloseTo(10895.83, 1);
+    expect(resultado.resumo.dataUltimaParcela).toBe('10/2028');
+  });
+
+  it('deve validar SAC amortização por prazo com extra menor (1000) contra site de referência', () => {
+    const input = {
+      valor: 115688.99,
+      taxaJuros: 9.89,
+      taxaPeriodicidade: 'anual' as const,
+      prazo: 36,
+      prazoUnidade: 'meses' as const,
+      sistema: 'SAC' as const,
+      dataInicio: '2026-08',
+      amortizacoesExtras: Array.from({ length: 36 }, (_, i) => ({ mes: i + 1, valor: 1000, tipo: 'prazo' as const })),
+    };
+
+    const resultado = calcularFinanciamentoV2(input);
+
+    // Referência: 32 parcelas — o termo cai 1 mês normal + drop condicional (amort - juros restante)
+    expect(resultado.evolucaoMensal).toHaveLength(32);
+    const amorts = resultado.evolucaoMensal.map((p) => p.amortizacao);
+    const ref = [3213.58, 3185.01, 3155.6, 3125.3, 3094.05, 3061.79, 3028.46, 2993.97, 2958.26, 2921.22, 2882.76, 2842.76, 2801.09, 2757.61, 2712.16, 2664.54, 2614.54, 2561.91, 2506.35, 2447.53, 2385.03, 2318.36, 2246.94, 2170.01, 2276.38, 2176.38, 2065.27, 2217.45, 2050.78, 2313.48, 1980.14, 2960.28];
+    ref.forEach((v, i) => expect(amorts[i]).toBeCloseTo(v, 2));
+    expect(resultado.resumo.numeroParcelas).toBe(32);
+    expect(resultado.resumo.totalAmortizacaoExtra).toBeCloseTo(31000, 1);
+    expect(resultado.resumo.totalJuros).toBeCloseTo(14161.62, 1);
+    expect(resultado.resumo.dataUltimaParcela).toBe('04/2029');
+  });
+
   it('deve retornar resultado vazio sem crashar quando prazo é zero', () => {
     const input = {
       valor: 100000,
@@ -409,8 +488,8 @@ describe('calcularFinanciamentoV2', () => {
     expect(mes3.saldoInicial).toBeCloseTo(83333.33, 2);
     expect(mes3.amortizacao).toBeCloseTo(8333.33, 2);
     expect(mes3.parcela).toBeCloseTo(9166.67, 2);
-    // Mês 4 continua com amortização constante
-    expect(mes4.amortizacao).toBeCloseTo(8333.33, 2);
-    expect(mes4.saldoFinal).toBeCloseTo(56666.67, 2);
+    // Mês 4: amortização recalculada sobre o novo saldo e o termo reduzido (por prazo)
+    expect(mes4.amortizacao).toBeCloseTo(8125, 2);
+    expect(mes4.saldoFinal).toBeCloseTo(56875, 2);
   });
 });

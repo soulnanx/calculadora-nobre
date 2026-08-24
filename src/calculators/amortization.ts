@@ -167,7 +167,7 @@ export function calcularFinanciamentoV2(
                     amortizacoesExtras, taxasSeguros, input.dataInicio);
   }
 
-  const totalPago = evolucaoMensal.reduce((sum, p) => sum + p.parcelaTotal, 0);
+  const totalPago = evolucaoMensal.reduce((sum, p) => sum + p.parcelaTotal + p.amortizacaoExtra, 0);
   const totalJuros = evolucaoMensal.reduce((sum, p) => sum + p.juros, 0);
   const totalAmortizacaoExtra = evolucaoMensal.reduce((sum, p) => sum + p.amortizacaoExtra, 0);
   const totalTaxasSeguros = evolucaoMensal.reduce((sum, p) => sum + p.taxaSeguro, 0);
@@ -239,8 +239,8 @@ function calcularSACV2(
   taxasSeguros: TaxaSeguro[],
   dataInicio?: string
 ): void {
-  let amortizacaoConstante = valor / prazoMeses;
   let saldoDevedor = valor;
+  let termoRestante = prazoMeses;
   let mes = 1;
 
   while (saldoDevedor > 0.01 && mes <= prazoMeses * 2) {
@@ -248,26 +248,26 @@ function calcularSACV2(
     const juros = saldoDevedor * taxaMensal;
     const taxaSeguro = calcularTaxaSeguroMes(mes, taxasSeguros);
 
-    // 1. Pagar a parcela do mês
-    const amortizacao = Math.min(amortizacaoConstante, saldoDevedor);
+    // 1. Pagar a parcela do mês: amortização = saldo / termo restante (SAC recalculado mês a mês)
+    const amortizacao = Math.min(saldoDevedor / Math.max(1, termoRestante), saldoDevedor);
     const parcelaBase = amortizacao + juros;
     const parcelaTotal = parcelaBase + taxaSeguro;
-    
-    saldoDevedor -= amortizacao;
 
-    // 2. Aplicar amortização extra APÓS pagar a parcela
-    const { novoSaldo, totalExtra, tipoAmort } = aplicarAmortizacoesExtras(mes, saldoDevedor, amortizacoesExtras);
-    saldoDevedor = novoSaldo;
+    const saldoAposParcela = saldoDevedor - amortizacao;
 
-    if (tipoAmort === 'prazo') {
-      // Mantém amortização constante, reduz prazo: parcelas restantes = saldo / amortizacaoConstante
-      // O while termina naturalmente quando saldo <= 0
-    } else if (tipoAmort === 'parcela') {
-      // Mantém prazo, recalcula amortização para os meses restantes
-      const mesesRestantes = prazoMeses - mes;
-      if (mesesRestantes > 0 && saldoDevedor > 0) {
-        amortizacaoConstante = saldoDevedor / mesesRestantes;
-      }
+    // 2. Aplicar amortização extra APÓS pagar a parcela, limitada ao saldo restante
+    const { totalExtra, tipoAmort } = aplicarAmortizacoesExtras(mes, saldoAposParcela, amortizacoesExtras);
+    const extraEfetiva = Math.min(totalExtra, Math.max(0, saldoAposParcela));
+    saldoDevedor = saldoAposParcela - extraEfetiva;
+
+    // 3. Atualizar o termo restante
+    termoRestante -= 1;
+    if (tipoAmort === 'prazo' && extraEfetiva > 0) {
+      // Amortizar por prazo: o extra também corta meses do prazo. Cada mês em que o extra
+      // equivale a uma amortização líquida (amortização - juros restante) reduz o prazo em +1 mês.
+      // Regra derivada empiricamente do simulador de referência (simuladoramortizacao.com.br).
+      const jurosPosAmortizacao = saldoAposParcela * taxaMensal;
+      termoRestante -= Math.round(totalExtra / (amortizacao - jurosPosAmortizacao));
     }
 
     evolucao.push({
@@ -276,7 +276,7 @@ function calcularSACV2(
       saldoInicial,
       juros,
       amortizacao,
-      amortizacaoExtra: totalExtra,
+      amortizacaoExtra: extraEfetiva,
       taxaSeguro,
       parcela: parcelaBase,
       parcelaTotal,
@@ -313,9 +313,11 @@ function calcularPriceV2(
     
     saldoDevedor -= amortizacao;
 
-    // 2. Aplicar amortização extra APÓS pagar a parcela
-    const { novoSaldo, totalExtra, tipoAmort } = aplicarAmortizacoesExtras(mes, saldoDevedor, amortizacoesExtras);
-    saldoDevedor = novoSaldo;
+    // 2. Aplicar amortização extra APÓS pagar a parcela, limitada ao saldo restante
+    const saldoAposParcela = saldoDevedor;
+    const { totalExtra, tipoAmort } = aplicarAmortizacoesExtras(mes, saldoAposParcela, amortizacoesExtras);
+    const extraEfetiva = Math.min(totalExtra, Math.max(0, saldoAposParcela));
+    saldoDevedor = saldoAposParcela - extraEfetiva;
 
     if (tipoAmort === 'prazo') {
       // Mantém parcela fixa, recalcula parcelas restantes
@@ -341,7 +343,7 @@ function calcularPriceV2(
       saldoInicial,
       juros,
       amortizacao,
-      amortizacaoExtra: totalExtra,
+      amortizacaoExtra: extraEfetiva,
       taxaSeguro,
       parcela: parcelaBase,
       parcelaTotal,
