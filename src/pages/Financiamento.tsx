@@ -30,6 +30,7 @@ export function Financiamento() {
   const [amortizacoesExtras, setAmortizacoesExtras] = useState<AmortizacaoExtra[]>([]);
   const [taxasSeguros, setTaxasSeguros] = useState<TaxaSeguro[]>([]);
   const [notacaoParcelas, setNotacaoParcelas] = useState('');
+  const [amortizacoesAbertas, setAmortizacoesAbertas] = useState(true);
   const [valorAmortizacao, setValorAmortizacao] = useState(0);
   const [tipoAmortizacao, setTipoAmortizacao] = useState<'prazo' | 'parcela'>('prazo');
   const [seqInicio, setSeqInicio] = useState(1);
@@ -265,8 +266,17 @@ export function Financiamento() {
               </div>
 
               <div className="border-t border-gray-200 pt-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Amortizações Extras</h3>
+                <button
+                  type="button"
+                  onClick={() => setAmortizacoesAbertas(!amortizacoesAbertas)}
+                  className="w-full flex items-center justify-between text-lg font-semibold text-gray-900 mb-4"
+                >
+                  <span>Amortizações Extras</span>
+                  <span className="text-gray-400 text-sm">{amortizacoesAbertas ? '▾ recolher' : '▸ expandir'}</span>
+                </button>
 
+                {amortizacoesAbertas && (
+                <>
                 <div className="space-y-3 md:space-y-4 mb-4 md:mb-6 p-3 md:p-4 bg-gray-50 rounded-lg">
                   <div>
                     <label className="block text-xs text-gray-600 mb-1">
@@ -320,24 +330,19 @@ export function Financiamento() {
 
                   <div className="pt-3 border-t border-gray-200">
                     <label className="block text-xs text-gray-600 mb-1">Gerador de sequência</label>
-                    <div className="flex gap-2 items-end">
-                      <NumberInput
-                        value={seqInicio}
-                        onChange={setSeqInicio}
-                      />
-                      <NumberInput
-                        value={seqIncremento}
-                        onChange={setSeqIncremento}
-                      />
-                      <NumberInput
-                        value={seqAte}
-                        onChange={setSeqAte}
-                      />
-                    </div>
-                    <div className="flex gap-2 text-xs text-gray-500 mt-1 mb-2">
-                      <span>começando em</span>
-                      <span>a cada</span>
-                      <span>até</span>
+                    <div className="grid grid-cols-3 gap-2 mb-2">
+                      <div>
+                        <label htmlFor="seqInicio" className="block text-xs text-gray-500 mb-1">começando em</label>
+                        <NumberInput id="seqInicio" value={seqInicio} onChange={setSeqInicio} />
+                      </div>
+                      <div>
+                        <label htmlFor="seqIncremento" className="block text-xs text-gray-500 mb-1">a cada</label>
+                        <NumberInput id="seqIncremento" value={seqIncremento} onChange={setSeqIncremento} />
+                      </div>
+                      <div>
+                        <label htmlFor="seqAte" className="block text-xs text-gray-500 mb-1">até</label>
+                        <NumberInput id="seqAte" value={seqAte} onChange={setSeqAte} />
+                      </div>
                     </div>
                     <button
                       onClick={aplicarGeradorSequencia}
@@ -397,6 +402,8 @@ export function Financiamento() {
                 >
                   Adicionar Amortização
                 </button>
+                </>
+                )}
               </div>
 
               <div className="border-t border-gray-200 pt-6">
@@ -499,10 +506,16 @@ export function Financiamento() {
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 md:p-6">
               <h2 className="text-lg md:text-xl font-semibold text-gray-900 mb-4 md:mb-6">Evolução</h2>
 
-              <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={dadosGrafico}>
+              <ResponsiveContainer width="100%" height={320}>
+                <LineChart data={dadosGrafico} margin={{ top: 5, right: 10, bottom: 25, left: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="mes" tick={{ fontSize: 10 }} label={{ value: 'Mês', position: 'insideBottom', offset: -5 }} />
+                  <XAxis
+                    dataKey="mes"
+                    tick={{ fontSize: 10 }}
+                    tickMargin={8}
+                    interval="preserveStartEnd"
+                    minTickGap={40}
+                  />
                   <YAxis yAxisId="left" tickFormatter={(v) => formatCurrencyCompact(v)} width={90} tick={{ fontSize: 10 }} />
                   <YAxis yAxisId="right" orientation="right" tickFormatter={(v) => formatCurrencyCompact(v)} width={80} tick={{ fontSize: 10 }} />
                   <Tooltip formatter={(value: number) => formatCurrency(value)} />
@@ -547,105 +560,95 @@ export function Financiamento() {
               </ResponsiveContainer>
             </div>
 
-            {/* Tabela */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 md:p-6">
-              <h2 className="text-lg md:text-xl font-semibold text-gray-900 mb-4 md:mb-6">Evolução Mensal - {sistema}</h2>
-
-              {/* Mobile: cards empilhados */}
-              <div className="md:hidden space-y-3">
-                {linhasTabela.map((row) => (
-                  <div key={row.mes} className="border border-gray-200 rounded-lg p-3">
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="font-semibold text-sm text-gray-900">{row.mes} | {row.data}</span>
-                    </div>
-                    <div className="space-y-1 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-gray-500">Saldo inicial</span>
-                        <span className="font-medium">{formatCurrency(row.saldoInicial)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-500">Juros</span>
-                        <span className="font-medium">{formatCurrency(row.juros)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-500">Amortização</span>
-                        <span className="font-medium">{formatCurrency(row.amortizacao)}</span>
-                      </div>
-                      {resultado.resumo.totalAmortizacaoExtra > 0 && (
-                        <div className="flex justify-between">
-                          <span className="text-gray-500">Amort. extra</span>
-                          <span className="font-medium">{formatCurrency(row.amortizacaoExtra)}</span>
-                        </div>
-                      )}
-                      {resultado.resumo.totalTaxasSeguros > 0 && (
-                        <div className="flex justify-between">
-                          <span className="text-gray-500">Taxa/seguro</span>
-                          <span className="font-medium">{formatCurrency(row.taxaSeguro)}</span>
-                        </div>
-                      )}
-                      <div className="flex justify-between pt-1 border-t border-gray-100">
-                        <span className="text-gray-500">Parcela total</span>
-                        <span className="font-semibold">{formatCurrency(row.parcelaTotal)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-500">Saldo final</span>
-                        <span className="font-medium">{formatCurrency(row.saldoFinal)}</span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Desktop: tabela */}
-              <div className="hidden md:block overflow-auto max-h-96 border border-gray-200 rounded-lg">
-                <table className="w-full text-sm">
-                  <thead className="bg-gray-50 sticky top-0">
-                    <tr>
-                      <th className="px-4 py-2 text-left font-semibold">Mês</th>
-                      <th className="px-4 py-2 text-right font-semibold">Saldo Inicial</th>
-                      <th className="px-4 py-2 text-right font-semibold">Juros</th>
-                      <th className="px-4 py-2 text-right font-semibold">Amortização</th>
-                      {resultado.resumo.totalAmortizacaoExtra > 0 && (
-                        <th className="px-4 py-2 text-right font-semibold">Amort. Extra</th>
-                      )}
-                      {resultado.resumo.totalTaxasSeguros > 0 && (
-                        <th className="px-4 py-2 text-right font-semibold">Taxa/Seguro</th>
-                      )}
-                      <th className="px-4 py-2 text-right font-semibold">Parcela Total</th>
-                      <th className="px-4 py-2 text-right font-semibold">Saldo Final</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {linhasTabela.map((row) => (
-                      <tr key={row.mes} className="border-t border-gray-200 hover:bg-gray-50">
-                        <td className="px-4 py-2">{row.mes} | {row.data}</td>
-                        <td className="px-4 py-2 text-right">{formatCurrency(row.saldoInicial)}</td>
-                        <td className="px-4 py-2 text-right">{formatCurrency(row.juros)}</td>
-                        <td className="px-4 py-2 text-right">{formatCurrency(row.amortizacao)}</td>
-                        {resultado.resumo.totalAmortizacaoExtra > 0 && (
-                          <td className="px-4 py-2 text-right">{formatCurrency(row.amortizacaoExtra)}</td>
-                        )}
-                        {resultado.resumo.totalTaxasSeguros > 0 && (
-                          <td className="px-4 py-2 text-right">{formatCurrency(row.taxaSeguro)}</td>
-                        )}
-                        <td className="px-4 py-2 text-right font-semibold">{formatCurrency(row.parcelaTotal)}</td>
-                        <td className="px-4 py-2 text-right">{formatCurrency(row.saldoFinal)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-              {tabelaTruncada && (
-                <p className="mt-3 text-sm text-gray-500">
-                  Mostrando as primeiras {MAX_LINHAS_TABELA} parcelas de {resultado.evolucaoMensal.length}.
-                </p>
-              )}
-            </div>
             </>
             )}
           </div>
         </div>
+
+        {resultado.evolucaoMensal.length > 0 && (
+          <div className="mt-4 md:mt-8 bg-white rounded-lg shadow-sm border border-gray-200 p-4 md:p-6">
+            <h2 className="text-lg md:text-xl font-semibold text-gray-900 mb-4 md:mb-6">Evolução Mensal - {sistema}</h2>
+
+            {/* Mobile: cards empilhados */}
+            <div className="md:hidden space-y-3">
+              {linhasTabela.map((row) => (
+                <div key={row.mes} className="border border-gray-200 rounded-lg p-3">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="font-semibold text-sm text-gray-900">{row.mes} | {row.data}</span>
+                  </div>
+                  <div className="space-y-1 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">Saldo inicial</span>
+                      <span className="font-medium">{formatCurrency(row.saldoInicial)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">Juros</span>
+                      <span className="font-medium">{formatCurrency(row.juros)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">Amortização</span>
+                      <span className="font-medium">{formatCurrency(row.amortizacao)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">Amort. extra</span>
+                      <span className="font-medium">{formatCurrency(row.amortizacaoExtra)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">Taxa/seguro</span>
+                      <span className="font-medium">{formatCurrency(row.taxaSeguro)}</span>
+                    </div>
+                    <div className="flex justify-between pt-1 border-t border-gray-100">
+                      <span className="text-gray-500">Parcela total</span>
+                      <span className="font-semibold">{formatCurrency(row.parcelaTotal)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">Saldo final</span>
+                      <span className="font-medium">{formatCurrency(row.saldoFinal)}</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop: tabela */}
+            <div className="hidden md:block overflow-auto max-h-96 border border-gray-200 rounded-lg">
+              <table className="w-full text-sm">
+                <thead className="bg-gray-50 sticky top-0">
+                  <tr>
+                    <th className="px-4 py-2 text-left font-semibold">Mês</th>
+                    <th className="px-4 py-2 text-right font-semibold">Saldo Inicial</th>
+                    <th className="px-4 py-2 text-right font-semibold">Juros</th>
+                    <th className="px-4 py-2 text-right font-semibold">Amortização</th>
+                    <th className="px-4 py-2 text-right font-semibold">Amort. Extra</th>
+                    <th className="px-4 py-2 text-right font-semibold">Taxa/Seguro</th>
+                    <th className="px-4 py-2 text-right font-semibold">Parcela Total</th>
+                    <th className="px-4 py-2 text-right font-semibold">Saldo Final</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {linhasTabela.map((row) => (
+                    <tr key={row.mes} className="border-t border-gray-200 hover:bg-gray-50">
+                      <td className="px-4 py-2">{row.mes} | {row.data}</td>
+                      <td className="px-4 py-2 text-right">{formatCurrency(row.saldoInicial)}</td>
+                      <td className="px-4 py-2 text-right">{formatCurrency(row.juros)}</td>
+                      <td className="px-4 py-2 text-right">{formatCurrency(row.amortizacao)}</td>
+                      <td className="px-4 py-2 text-right">{formatCurrency(row.amortizacaoExtra)}</td>
+                      <td className="px-4 py-2 text-right">{formatCurrency(row.taxaSeguro)}</td>
+                      <td className="px-4 py-2 text-right font-semibold">{formatCurrency(row.parcelaTotal)}</td>
+                      <td className="px-4 py-2 text-right">{formatCurrency(row.saldoFinal)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {tabelaTruncada && (
+              <p className="mt-3 text-sm text-gray-500">
+                Mostrando as primeiras {MAX_LINHAS_TABELA} parcelas de {resultado.evolucaoMensal.length}.
+              </p>
+            )}
+          </div>
+        )}
       </main>
     </div>
   );
